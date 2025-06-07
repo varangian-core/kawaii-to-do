@@ -5,6 +5,7 @@ export interface ToDo {
   id: string;
   content: string;
   backgroundImageUrl?: string;
+  assignedUserId?: string;
 }
 
 export interface Column {

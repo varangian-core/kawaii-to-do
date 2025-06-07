@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { ToDo } from '../../store/boardStore';
 import { useBoardStore } from '../../store/boardStore';
 import { useUIStore } from '../../store/uiStore';
+import { useUserStore } from '../../store/userStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 
@@ -86,6 +87,30 @@ const DeleteButton = styled(ActionButton)`
   }
 `;
 
+const UserBadge = styled.div<{ $color: string }>`
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: ${props => props.$color};
+  color: white;
+  border-radius: 1rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+
+const UserIcon = styled.span`
+  font-size: 0.9rem;
+`;
+
 interface ToDoCardProps {
   task: ToDo;
   isDragging?: boolean;
@@ -94,8 +119,11 @@ interface ToDoCardProps {
 export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) => {
   const { updateTask, deleteTask } = useBoardStore();
   const { openImagePicker } = useUIStore();
+  const { users, currentUserId } = useUserStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(task.content);
+  
+  const assignedUser = task.assignedUserId ? users[task.assignedUserId] : null;
 
   const {
     attributes,
@@ -133,6 +161,18 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
     }
   };
 
+  const handleUserClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentUserId) {
+      // If clicked user is already assigned, unassign. Otherwise assign current user
+      if (task.assignedUserId === currentUserId) {
+        updateTask(task.id, { assignedUserId: undefined });
+      } else {
+        updateTask(task.id, { assignedUserId: currentUserId });
+      }
+    }
+  };
+
   return (
     <CardContainer
       ref={setNodeRef}
@@ -146,6 +186,28 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
       {...attributes}
       {...listeners}
     >
+      {assignedUser && (
+        <UserBadge 
+          $color={assignedUser.color}
+          onClick={handleUserClick}
+          title={`Assigned to ${assignedUser.name}`}
+        >
+          {assignedUser.icon && <UserIcon>{assignedUser.icon}</UserIcon>}
+          <span>{assignedUser.name}</span>
+        </UserBadge>
+      )}
+      
+      {!assignedUser && currentUserId && (
+        <UserBadge 
+          $color="#ddd"
+          onClick={handleUserClick}
+          title="Click to assign yourself"
+          style={{ opacity: 0.6 }}
+        >
+          <span>+</span>
+        </UserBadge>
+      )}
+      
       <ContentOverlay $hasBackground={!!task.backgroundImageUrl}>
         {isEditing ? (
           <Input

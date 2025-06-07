@@ -3,6 +3,7 @@ import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { useAppInitializer } from './hooks/useAppInitializer';
 import { PageWrapper } from './components/layout/PageWrapper';
 import { Header } from './components/layout/Header';
+import { UserManager } from './components/UserManager/UserManager';
 import { KanbanBoard } from './components/board/KanbanBoard';
 import { ImagePickerModal } from './components/ImagePicker/ImagePickerModal';
 import { useUIStore } from './store/uiStore';
@@ -13,10 +14,10 @@ const floatUp = keyframes`
     opacity: 0;
   }
   10% {
-    opacity: 0.3;
+    opacity: 0.15;
   }
   90% {
-    opacity: 0.3;
+    opacity: 0.15;
   }
   100% {
     transform: translateY(-100vh) rotate(360deg);
@@ -26,17 +27,34 @@ const floatUp = keyframes`
 
 const floatDiagonal = keyframes`
   0% {
-    transform: translate(0, 100vh) rotate(0deg);
+    transform: translate(-10vw, 110vh) rotate(0deg);
     opacity: 0;
   }
-  10% {
+  5% {
     opacity: 0.2;
   }
-  90% {
+  95% {
     opacity: 0.2;
   }
   100% {
-    transform: translate(30vw, -100vh) rotate(180deg);
+    transform: translate(110vw, -10vh) rotate(720deg);
+    opacity: 0;
+  }
+`;
+
+const floatDiagonalReverse = keyframes`
+  0% {
+    transform: translate(110vw, 110vh) rotate(0deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.2;
+  }
+  95% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translate(-10vw, -10vh) rotate(-720deg);
     opacity: 0;
   }
 `;
@@ -79,17 +97,18 @@ const BackgroundHearts = styled.div`
   overflow: hidden;
 `;
 
-const FloatingHeart = styled.div<{ delay: number; left: string; duration: number; diagonal?: boolean; size: number; heart: string }>`
+const FloatingHeart = styled.div<{ $delay: number; $left: string; $duration: number; $diagonal?: boolean; $reverse?: boolean; $size: number; $heart: string }>`
   position: absolute;
   bottom: -5vh;
-  left: ${props => props.left};
-  font-size: ${props => props.size}px;
-  animation: ${props => props.diagonal ? floatDiagonal : floatUp} ${props => props.duration}s linear infinite;
-  animation-delay: ${props => props.delay}s;
+  left: ${props => props.$left};
+  font-size: ${props => props.$size}px;
+  animation: ${props => props.$reverse ? floatDiagonalReverse : floatDiagonal} ${props => props.$duration}s linear infinite;
+  animation-delay: ${props => props.$delay}s;
   opacity: 0;
+  filter: blur(${props => props.$size > 25 ? '1px' : '0px'});
   
   &::before {
-    content: '${props => props.heart}';
+    content: '${props => props.$heart}';
   }
 `;
 
@@ -117,15 +136,16 @@ function App() {
     initializeApp();
   }, [initializeApp]);
 
-  // Generate random hearts for background animation
+  // Generate many hearts for diagonal animation
   const heartsEmojis = ['💕', '💖', '💗', '💝', '💓', '💞', '💘'];
-  const hearts = Array.from({ length: 15 }, (_, i) => ({
+  const hearts = Array.from({ length: 30 }, (_, i) => ({
     id: i,
-    delay: Math.random() * 20,
-    left: `${Math.random() * 100}%`,
-    duration: 15 + Math.random() * 10,
-    diagonal: Math.random() > 0.5,
-    size: Math.random() * 20 + 20,
+    delay: (i * 0.8) + Math.random() * 2, // Continuous stream
+    left: `${Math.random() * 120 - 10}%`, // Start positions across and beyond screen
+    duration: 15 + Math.random() * 10, // Varied speeds
+    diagonal: true, // All diagonal
+    reverse: i % 3 === 0, // Some go opposite direction
+    size: Math.random() * 25 + 10, // Various sizes
     heart: heartsEmojis[Math.floor(Math.random() * heartsEmojis.length)]
   }));
 
@@ -137,18 +157,20 @@ function App() {
           {hearts.map(heart => (
             <FloatingHeart
               key={heart.id}
-              delay={heart.delay}
-              left={heart.left}
-              duration={heart.duration}
-              diagonal={heart.diagonal}
-              size={heart.size}
-              heart={heart.heart}
+              $delay={heart.delay}
+              $left={heart.left}
+              $duration={heart.duration}
+              $diagonal={heart.diagonal}
+              $reverse={heart.reverse}
+              $size={heart.size}
+              $heart={heart.heart}
             />
           ))}
         </BackgroundHearts>
         <AppContainer>
           <PageWrapper>
             <Header />
+            <UserManager />
             <MainContent>
               <KanbanBoard />
             </MainContent>

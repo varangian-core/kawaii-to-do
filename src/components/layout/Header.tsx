@@ -5,11 +5,11 @@ import { motion } from 'framer-motion';
 const floatAnimation = keyframes`
   0%, 100% {
     transform: translateY(0) scale(1);
-    opacity: 0.3;
+    opacity: 0.2;
   }
   50% {
-    transform: translateY(-20px) scale(1.1);
-    opacity: 0.6;
+    transform: translateY(-15px) scale(1.05);
+    opacity: 0.4;
   }
 `;
 
@@ -18,7 +18,7 @@ const pulseAnimation = keyframes`
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.02);
   }
 `;
 
@@ -124,10 +124,10 @@ const Subtitle = styled.p`
   font-style: italic;
 `;
 
-const Sparkle = styled.span<{ delay?: string }>`
+const Sparkle = styled.span<{ $delay?: string }>`
   display: inline-block;
   animation: ${pulseAnimation} 1.5s ease-in-out infinite;
-  animation-delay: ${props => props.delay || '0s'};
+  animation-delay: ${props => props.$delay || '0s'};
 `;
 
 export const Header: React.FC = () => {
@@ -145,9 +145,9 @@ export const Header: React.FC = () => {
       
       <TitleContainer>
         <Title>
-          <Sparkle delay="0s">✨</Sparkle>
+          <Sparkle $delay="0s">✨</Sparkle>
           <KawaiiText>Kawaii</KawaiiText> To-Do
-          <Sparkle delay="0.5s">✨</Sparkle>
+          <Sparkle $delay="0.5s">✨</Sparkle>
         </Title>
         <Subtitle>Make your tasks beautiful with love 💕</Subtitle>
       </TitleContainer>
