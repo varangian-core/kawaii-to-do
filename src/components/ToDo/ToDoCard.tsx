@@ -10,6 +10,7 @@ import { useUIStore } from '../../store/uiStore';
 import { useUserStore } from '../../store/userStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
+import { CircularProgress } from '../common/CircularProgress';
 
 const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string; $isOver?: boolean }>`
   background: ${props => {
@@ -65,8 +66,11 @@ const TaskContent = styled.p`
 const ActionsContainer = styled.div`
   display: flex;
   gap: 0.5rem;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: 0.5rem;
+  position: relative;
+  z-index: 2;
 `;
 
 const ActionButton = styled(Button)`
@@ -112,6 +116,11 @@ const UserBadge = styled.div<{ $color: string }>`
 
 const UserIcon = styled.span`
   font-size: 0.9rem;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 0.5rem;
 `;
 
 interface ToDoCardProps {
@@ -180,6 +189,10 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
     }
   };
 
+  const handleProgressChange = (newProgress: number) => {
+    updateTask(task.id, { progress: newProgress });
+  };
+
   return (
     <CardContainer
       ref={(node) => {
@@ -239,24 +252,30 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
       </ContentOverlay>
       
       <ActionsContainer>
-        <ActionButton
-          onClick={(e) => {
-            e.stopPropagation();
-            openImagePicker(task.id);
-          }}
-          title="Change background image"
-        >
-          🎨
-        </ActionButton>
-        <DeleteButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete();
-          }}
-          title="Delete task"
-        >
-          🗑️
-        </DeleteButton>
+        <CircularProgress 
+          progress={task.progress || 0} 
+          onProgressChange={handleProgressChange}
+        />
+        <ButtonGroup>
+          <ActionButton
+            onClick={(e) => {
+              e.stopPropagation();
+              openImagePicker(task.id);
+            }}
+            title="Change background image"
+          >
+            🎨
+          </ActionButton>
+          <DeleteButton
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete();
+            }}
+            title="Delete task"
+          >
+            🗑️
+          </DeleteButton>
+        </ButtonGroup>
       </ActionsContainer>
     </CardContainer>
   );

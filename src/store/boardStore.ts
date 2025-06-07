@@ -6,6 +6,7 @@ export interface ToDo {
   content: string;
   backgroundImageUrl?: string;
   assignedUserId?: string;
+  progress?: number; // 0-100
 }
 
 export interface Column {
@@ -56,6 +57,7 @@ export const useBoardStore = create<BoardState>()(
           const newTask: ToDo = {
             id: taskId,
             content,
+            progress: 0,
           };
 
           set((state) => ({
