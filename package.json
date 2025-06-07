@@ -1,7 +1,7 @@
 {
   "name": "kawaii-to-do",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

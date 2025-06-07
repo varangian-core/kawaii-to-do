@@ -4,6 +4,39 @@
     "images": []
   },
   "landscapes": {
-    "images": []
+    "images": [
+      {
+        "name": "Whisk_217e88a062.jpg",
+        "path": "/images/landscapes/Whisk_217e88a062.jpg"
+      },
+      {
+        "name": "Whisk_7431031286.jpg",
+        "path": "/images/landscapes/Whisk_7431031286.jpg"
+      },
+      {
+        "name": "Whisk_83b36868ee.jpg",
+        "path": "/images/landscapes/Whisk_83b36868ee.jpg"
+      },
+      {
+        "name": "Whisk_86321c9f9a.jpg",
+        "path": "/images/landscapes/Whisk_86321c9f9a.jpg"
+      },
+      {
+        "name": "Whisk_8f3219bf3b.jpg",
+        "path": "/images/landscapes/Whisk_8f3219bf3b.jpg"
+      },
+      {
+        "name": "Whisk_b0ad001ee3.jpg",
+        "path": "/images/landscapes/Whisk_b0ad001ee3.jpg"
+      },
+      {
+        "name": "Whisk_bd7666599a.jpg",
+        "path": "/images/landscapes/Whisk_bd7666599a.jpg"
+      },
+      {
+        "name": "Whisk_edf565fedd.jpg",
+        "path": "/images/landscapes/Whisk_edf565fedd.jpg"
+      }
+    ]
   }
 }

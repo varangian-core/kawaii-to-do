@@ -125,7 +125,8 @@ export const KanbanBoard: React.FC = () => {
           const taskIndex = column.taskIds.indexOf(overId);
           if (taskIndex !== -1) {
             destColumnId = columnId;
-            destIndex = taskIndex;
+            // Insert after the target task
+            destIndex = taskIndex + 1;
             break;
           }
         }

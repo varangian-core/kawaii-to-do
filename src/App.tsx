@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { useAppInitializer } from './hooks/useAppInitializer';
 import { PageWrapper } from './components/layout/PageWrapper';
@@ -51,20 +51,25 @@ function App() {
     initializeApp();
   }, [initializeApp]);
 
-  return (
-    <>
-      <GlobalStyle />
-      <AppContainer>
-        <PageWrapper>
-          <Header />
-          <MainContent>
-            <KanbanBoard />
-          </MainContent>
-        </PageWrapper>
-        {isImagePickerOpen && <ImagePickerModal />}
-      </AppContainer>
-    </>
-  );
+  try {
+    return (
+      <>
+        <GlobalStyle />
+        <AppContainer>
+          <PageWrapper>
+            <Header />
+            <MainContent>
+              <KanbanBoard />
+            </MainContent>
+          </PageWrapper>
+          {isImagePickerOpen && <ImagePickerModal />}
+        </AppContainer>
+      </>
+    );
+  } catch (error) {
+    console.error('Error rendering App:', error);
+    return <div>Error loading app - check console</div>;
+  }
 }
 
 export default App;

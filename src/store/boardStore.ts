@@ -47,7 +47,7 @@ const initialState = {
 export const useBoardStore = create<BoardState>()(
   subscribeWithSelector(
     devtools(
-      (set, get) => ({
+      (set) => ({
         ...initialState,
 
         addTask: (columnId: string, content: string) => {

@@ -1,51 +1,48 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useBoardStore } from '../store/boardStore';
-import { useLocalStorage } from './useLocalStorage';
 
 const STORAGE_KEY = 'kawaii-todo-board';
 
 export function useAppInitializer() {
   const setBoardState = useBoardStore((state) => state.setBoardState);
   const isInitialized = useRef(false);
-  
-  // Get the current board state for persistence
-  const boardState = useBoardStore((state) => ({
-    tasks: state.tasks,
-    columns: state.columns,
-    columnOrder: state.columnOrder,
-  }));
-
-  // Use localStorage hook for persistence
-  const [savedState, setSavedState] = useLocalStorage(STORAGE_KEY, boardState);
 
   const initializeApp = useCallback(() => {
     if (isInitialized.current) return;
     
     try {
-      // Load saved state if it exists
-      if (savedState && Object.keys(savedState).length > 0) {
-        setBoardState(savedState);
+      // Load saved state from localStorage
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData && Object.keys(parsedData).length > 0) {
+          setBoardState(parsedData);
+        }
       }
       
       isInitialized.current = true;
     } catch (error) {
       console.error('Error initializing app:', error);
     }
-  }, [savedState, setBoardState]);
+  }, [setBoardState]);
 
-  // Subscribe to board state changes and save to localStorage
-  useBoardStore.subscribe(
-    (state) => ({
-      tasks: state.tasks,
-      columns: state.columns,
-      columnOrder: state.columnOrder,
-    }),
-    (newState) => {
-      if (isInitialized.current) {
-        setSavedState(newState);
+  // Set up subscription for persistence
+  useEffect(() => {
+    const unsubscribe = useBoardStore.subscribe(
+      (state) => {
+        if (isInitialized.current) {
+          const dataToSave = {
+            tasks: state.tasks,
+            columns: state.columns,
+            columnOrder: state.columnOrder,
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        }
       }
-    }
-  );
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   return { initializeApp };
 }
