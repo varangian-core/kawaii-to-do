@@ -149,7 +149,7 @@ export const Header: React.FC = () => {
           <KawaiiText>Kawaii</KawaiiText> To-Do
           <Sparkle $delay="0.5s">✨</Sparkle>
         </Title>
-        <Subtitle>Make your tasks beautiful with love 💕</Subtitle>
+        <Subtitle>Let's make our tasks fun and beautiful! 💕</Subtitle>
       </TitleContainer>
     </HeaderContainer>
   );

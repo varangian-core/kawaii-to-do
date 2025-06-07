@@ -4,10 +4,13 @@ import { devtools } from 'zustand/middleware';
 export interface UIState {
   isImagePickerOpen: boolean;
   imagePickerTargetId: string | null;
+  isEditMode: boolean;
   
   // Actions
   openImagePicker: (targetTaskId: string) => void;
   closeImagePicker: () => void;
+  toggleEditMode: () => void;
+  setEditMode: (isEdit: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -15,6 +18,7 @@ export const useUIStore = create<UIState>()(
     (set) => ({
       isImagePickerOpen: false,
       imagePickerTargetId: null,
+      isEditMode: false,
 
       openImagePicker: (targetTaskId: string) => {
         set({
@@ -28,6 +32,14 @@ export const useUIStore = create<UIState>()(
           isImagePickerOpen: false,
           imagePickerTargetId: null,
         });
+      },
+
+      toggleEditMode: () => {
+        set((state) => ({ isEditMode: !state.isEditMode }));
+      },
+
+      setEditMode: (isEdit: boolean) => {
+        set({ isEditMode: isEdit });
       },
     }),
     {

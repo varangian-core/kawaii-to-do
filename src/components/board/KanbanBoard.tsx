@@ -17,6 +17,7 @@ import {
 import { motion } from 'framer-motion';
 import { useBoardStore } from '../../store/boardStore';
 import { useUserStore } from '../../store/userStore';
+import { useUIStore } from '../../store/uiStore';
 import { Column } from './Column';
 import { ToDoCard } from '../ToDo/ToDoCard';
 import { Button } from '../common/Button';
@@ -55,6 +56,7 @@ const DragOverlayContainer = styled.div`
 export const KanbanBoard: React.FC = () => {
   const { columns, columnOrder, tasks, moveTask, reorderColumns, addColumn, updateTask } = useBoardStore();
   const { users } = useUserStore();
+  const { isEditMode } = useUIStore();
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<'task' | 'column' | 'user' | null>(null);
   const [activeUser, setActiveUser] = useState<any>(null);
@@ -209,9 +211,11 @@ export const KanbanBoard: React.FC = () => {
               );
             })}
             
-            <AddColumnButton onClick={handleAddColumn}>
-              + Add Column
-            </AddColumnButton>
+            {isEditMode && (
+              <AddColumnButton onClick={handleAddColumn}>
+                + Add Column
+              </AddColumnButton>
+            )}
           </BoardContainer>
         </SortableContext>
 

@@ -3,6 +3,7 @@ import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { useAppInitializer } from './hooks/useAppInitializer';
 import { PageWrapper } from './components/layout/PageWrapper';
 import { Header } from './components/layout/Header';
+import { EditModeToggle } from './components/layout/EditModeToggle';
 import { UserManager } from './components/UserManager/UserManager';
 import { KanbanBoard } from './components/board/KanbanBoard';
 import { ImagePickerModal } from './components/ImagePicker/ImagePickerModal';
@@ -144,6 +145,7 @@ function App() {
         <AppContainer>
           <PageWrapper>
             <Header />
+            <EditModeToggle />
             <MainContent>
               <BackgroundHearts>
                 {hearts.map(heart => (

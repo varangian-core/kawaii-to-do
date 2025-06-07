@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useUserStore, getRandomColor, getRandomIcon } from '../../store/userStore';
+import { useUIStore } from '../../store/uiStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 
@@ -162,6 +163,7 @@ const DraggableUserBadge: React.FC<DraggableUserBadgeProps> = ({ user, isActive,
 
 export const UserManager: React.FC = () => {
   const { users, currentUserId, addUser, deleteUser, setCurrentUser } = useUserStore();
+  const { isEditMode } = useUIStore();
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserColor, setNewUserColor] = useState(getRandomColor());
@@ -236,9 +238,11 @@ export const UserManager: React.FC = () => {
             </Button>
           </AddUserForm>
         ) : (
-          <Button onClick={() => setIsAddingUser(true)}>
-            + Add User
-          </Button>
+          isEditMode && (
+            <Button onClick={() => setIsAddingUser(true)}>
+              + Add User
+            </Button>
+          )
         )}
       </UserList>
     </UserManagerContainer>
