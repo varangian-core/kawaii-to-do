@@ -4,27 +4,10 @@ import { useAppInitializer } from './hooks/useAppInitializer';
 import { PageWrapper } from './components/layout/PageWrapper';
 import { Header } from './components/layout/Header';
 import { EditModeToggle } from './components/layout/EditModeToggle';
-import { UserManager } from './components/UserManager/UserManager';
 import { KanbanBoard } from './components/board/KanbanBoard';
 import { ImagePickerModal } from './components/ImagePicker/ImagePickerModal';
 import { useUIStore } from './store/uiStore';
 
-const floatUp = keyframes`
-  0% {
-    transform: translateY(100vh) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 0.15;
-  }
-  90% {
-    opacity: 0.15;
-  }
-  100% {
-    transform: translateY(-100vh) rotate(360deg);
-    opacity: 0;
-  }
-`;
 
 const floatDiagonal = keyframes`
   from {
