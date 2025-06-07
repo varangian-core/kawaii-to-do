@@ -29,6 +29,8 @@ const BoardContainer = styled(motion.div)`
   overflow-x: auto;
   min-height: 600px;
   align-items: flex-start;
+  position: relative;
+  z-index: 1;
 `;
 
 const AddColumnButton = styled(Button)`
@@ -176,67 +178,69 @@ export const KanbanBoard: React.FC = () => {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <UserManager />
-      
-      <SortableContext
-        items={columnOrder}
-        strategy={horizontalListSortingStrategy}
+    <div style={{ position: 'relative', zIndex: 2 }}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
       >
-        <BoardContainer
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+        <UserManager />
+        
+        <SortableContext
+          items={columnOrder}
+          strategy={horizontalListSortingStrategy}
         >
-          {columnOrder.map((columnId) => {
-            const column = columns[columnId];
-            if (!column) return null;
+          <BoardContainer
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {columnOrder.map((columnId) => {
+              const column = columns[columnId];
+              if (!column) return null;
 
-            return (
-              <Column
-                key={column.id}
-                column={column}
-                tasks={column.taskIds.map((taskId) => tasks[taskId]).filter(Boolean)}
-              />
-            );
-          })}
-          
-          <AddColumnButton onClick={handleAddColumn}>
-            + Add Column
-          </AddColumnButton>
-        </BoardContainer>
-      </SortableContext>
+              return (
+                <Column
+                  key={column.id}
+                  column={column}
+                  tasks={column.taskIds.map((taskId) => tasks[taskId]).filter(Boolean)}
+                />
+              );
+            })}
+            
+            <AddColumnButton onClick={handleAddColumn}>
+              + Add Column
+            </AddColumnButton>
+          </BoardContainer>
+        </SortableContext>
 
-      <DragOverlay dropAnimation={null}>
-        {activeId && activeType === 'task' && tasks[activeId] && (
-          <DragOverlayContainer>
-            <ToDoCard task={tasks[activeId]} isDragging={false} />
-          </DragOverlayContainer>
-        )}
-        {activeType === 'user' && activeUser && (
-          <DragOverlayContainer>
-            <div style={{
-              background: activeUser.color,
-              color: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '2rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.9rem',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            }}>
-              {activeUser.icon && <span style={{ fontSize: '1.2rem' }}>{activeUser.icon}</span>}
-              <span>{activeUser.name}</span>
-            </div>
-          </DragOverlayContainer>
-        )}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay dropAnimation={null}>
+          {activeId && activeType === 'task' && tasks[activeId] && (
+            <DragOverlayContainer>
+              <ToDoCard task={tasks[activeId]} isDragging={false} />
+            </DragOverlayContainer>
+          )}
+          {activeType === 'user' && activeUser && (
+            <DragOverlayContainer>
+              <div style={{
+                background: activeUser.color,
+                color: 'white',
+                padding: '0.5rem 1rem',
+                borderRadius: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.9rem',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              }}>
+                {activeUser.icon && <span style={{ fontSize: '1.2rem' }}>{activeUser.icon}</span>}
+                <span>{activeUser.name}</span>
+              </div>
+            </DragOverlayContainer>
+          )}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 };
