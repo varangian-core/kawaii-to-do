@@ -43,6 +43,11 @@ const AddColumnButton = styled(Button)`
   }
 `;
 
+const DragOverlayContainer = styled.div`
+  cursor: grabbing;
+  transform: rotate(3deg);
+`;
+
 export const KanbanBoard: React.FC = () => {
   const { columns, columnOrder, tasks, moveTask, reorderColumns, addColumn } = useBoardStore();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -183,9 +188,11 @@ export const KanbanBoard: React.FC = () => {
         </BoardContainer>
       </SortableContext>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeId && activeType === 'task' && tasks[activeId] && (
-          <ToDoCard task={tasks[activeId]} isDragging />
+          <DragOverlayContainer>
+            <ToDoCard task={tasks[activeId]} isDragging={false} />
+          </DragOverlayContainer>
         )}
       </DragOverlay>
     </DndContext>

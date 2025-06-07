@@ -12,12 +12,14 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 
 const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
   padding: 1rem;
   min-width: 300px;
   max-width: 300px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+  border: 1px solid rgba(255, 182, 193, 0.3);
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 200px);

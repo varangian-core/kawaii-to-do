@@ -25,7 +25,8 @@ const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage
   padding: 1rem;
   cursor: ${props => props.isDragging ? 'grabbing' : 'grab'};
   box-shadow: ${props => props.isDragging ? '0 8px 16px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)'};
-  opacity: ${props => props.isDragging ? 0.3 : 1};
+  opacity: ${props => props.isDragging ? 0.5 : 1};
+  transform: ${props => props.isDragging ? 'scale(1.02)' : 'scale(1)'};
   position: relative;
   min-height: 80px;
   display: flex;
