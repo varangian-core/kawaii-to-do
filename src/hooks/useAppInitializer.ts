@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useBoardStore } from '../store/boardStore';
+import { useUserStore } from '../store/userStore';
 
-const STORAGE_KEY = 'kawaii-todo-board';
+const BOARD_STORAGE_KEY = 'kawaii-todo-board';
+const USER_STORAGE_KEY = 'kawaii-todo-users';
 
 export function useAppInitializer() {
   const setBoardState = useBoardStore((state) => state.setBoardState);
@@ -11,12 +13,21 @@ export function useAppInitializer() {
     if (isInitialized.current) return;
     
     try {
-      // Load saved state from localStorage
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
+      // Load saved board state
+      const savedBoardData = localStorage.getItem(BOARD_STORAGE_KEY);
+      if (savedBoardData) {
+        const parsedData = JSON.parse(savedBoardData);
         if (parsedData && Object.keys(parsedData).length > 0) {
           setBoardState(parsedData);
+        }
+      }
+      
+      // Load saved user state
+      const savedUserData = localStorage.getItem(USER_STORAGE_KEY);
+      if (savedUserData) {
+        const parsedUserData = JSON.parse(savedUserData);
+        if (parsedUserData && parsedUserData.users) {
+          useUserStore.setState(parsedUserData);
         }
       }
       
@@ -36,12 +47,28 @@ export function useAppInitializer() {
             columns: state.columns,
             columnOrder: state.columnOrder,
           };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+          localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify(dataToSave));
+        }
+      }
+    );
+    
+    // Subscribe to user store changes
+    const unsubscribeUsers = useUserStore.subscribe(
+      (state) => {
+        if (isInitialized.current) {
+          const userDataToSave = {
+            users: state.users,
+            currentUserId: state.currentUserId,
+          };
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userDataToSave));
         }
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeUsers();
+    };
   }, []);
 
   return { initializeApp };

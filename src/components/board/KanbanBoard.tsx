@@ -16,9 +16,11 @@ import {
 } from '@dnd-kit/sortable';
 import { motion } from 'framer-motion';
 import { useBoardStore } from '../../store/boardStore';
+import { useUserStore } from '../../store/userStore';
 import { Column } from './Column';
 import { ToDoCard } from '../ToDo/ToDoCard';
 import { Button } from '../common/Button';
+import { UserManager } from '../UserManager/UserManager';
 
 const BoardContainer = styled(motion.div)`
   display: flex;
@@ -49,9 +51,11 @@ const DragOverlayContainer = styled.div`
 `;
 
 export const KanbanBoard: React.FC = () => {
-  const { columns, columnOrder, tasks, moveTask, reorderColumns, addColumn } = useBoardStore();
+  const { columns, columnOrder, tasks, moveTask, reorderColumns, addColumn, updateTask } = useBoardStore();
+  const { users } = useUserStore();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [activeType, setActiveType] = useState<'task' | 'column' | null>(null);
+  const [activeType, setActiveType] = useState<'task' | 'column' | 'user' | null>(null);
+  const [activeUser, setActiveUser] = useState<any>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -63,12 +67,16 @@ export const KanbanBoard: React.FC = () => {
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    setActiveId(active.id as string);
+    const activeIdStr = active.id as string;
+    setActiveId(activeIdStr);
     
-    // Determine if we're dragging a task or column
-    if (tasks[active.id]) {
+    // Determine what we're dragging
+    if (active.data.current?.type === 'user') {
+      setActiveType('user');
+      setActiveUser(active.data.current.user);
+    } else if (tasks[activeIdStr]) {
       setActiveType('task');
-    } else if (columns[active.id]) {
+    } else if (columns[activeIdStr]) {
       setActiveType('column');
     }
   };
@@ -79,11 +87,24 @@ export const KanbanBoard: React.FC = () => {
     if (!over) {
       setActiveId(null);
       setActiveType(null);
+      setActiveUser(null);
       return;
     }
 
     const activeId = active.id as string;
     const overId = over.id as string;
+    
+    // Handle user drops on tasks
+    if (activeType === 'user' && tasks[overId]) {
+      const user = active.data.current?.user;
+      if (user) {
+        updateTask(overId, { assignedUserId: user.id });
+      }
+      setActiveId(null);
+      setActiveType(null);
+      setActiveUser(null);
+      return;
+    }
 
     // Handle column reordering
     if (activeType === 'column' && activeId !== overId) {
@@ -144,6 +165,7 @@ export const KanbanBoard: React.FC = () => {
 
     setActiveId(null);
     setActiveType(null);
+    setActiveUser(null);
   };
 
   const handleAddColumn = () => {
@@ -160,6 +182,8 @@ export const KanbanBoard: React.FC = () => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      <UserManager />
+      
       <SortableContext
         items={columnOrder}
         strategy={horizontalListSortingStrategy}
@@ -192,6 +216,24 @@ export const KanbanBoard: React.FC = () => {
         {activeId && activeType === 'task' && tasks[activeId] && (
           <DragOverlayContainer>
             <ToDoCard task={tasks[activeId]} isDragging={false} />
+          </DragOverlayContainer>
+        )}
+        {activeType === 'user' && activeUser && (
+          <DragOverlayContainer>
+            <div style={{
+              background: activeUser.color,
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '2rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '0.9rem',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+            }}>
+              {activeUser.icon && <span style={{ fontSize: '1.2rem' }}>{activeUser.icon}</span>}
+              <span>{activeUser.name}</span>
+            </div>
           </DragOverlayContainer>
         )}
       </DragOverlay>

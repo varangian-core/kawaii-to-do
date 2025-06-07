@@ -170,7 +170,6 @@ function App() {
         <AppContainer>
           <PageWrapper>
             <Header />
-            <UserManager />
             <MainContent>
               <KanbanBoard />
             </MainContent>

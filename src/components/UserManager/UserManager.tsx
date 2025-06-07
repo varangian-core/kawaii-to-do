@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import { useUserStore, getRandomColor, getRandomIcon } from '../../store/userStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
@@ -103,6 +105,61 @@ const IconPicker = styled.select`
   }
 `;
 
+interface DraggableUserBadgeProps {
+  user: {
+    id: string;
+    name: string;
+    color: string;
+    icon?: string;
+  };
+  isActive: boolean;
+  onDelete: (e: React.MouseEvent) => void;
+  onClick: () => void;
+}
+
+const DraggableUserBadge: React.FC<DraggableUserBadgeProps> = ({ user, isActive, onDelete, onClick }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `user-${user.id}`,
+    data: {
+      type: 'user',
+      user,
+    },
+  });
+
+  const style = transform ? {
+    transform: CSS.Translate.toString(transform),
+  } : undefined;
+
+  return (
+    <UserBadge
+      ref={setNodeRef}
+      style={style}
+      $color={user.color}
+      $isActive={isActive}
+      onClick={onClick}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: isDragging ? 1.1 : 1, opacity: isDragging ? 0.8 : 1 }}
+      exit={{ scale: 0, opacity: 0 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      {...attributes}
+      {...listeners}
+    >
+      {user.icon && <UserIcon>{user.icon}</UserIcon>}
+      <span>{user.name}</span>
+      <DeleteButton onClick={onDelete}>
+        ×
+      </DeleteButton>
+    </UserBadge>
+  );
+};
+
 export const UserManager: React.FC = () => {
   const { users, currentUserId, addUser, deleteUser, setCurrentUser } = useUserStore();
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -135,23 +192,13 @@ export const UserManager: React.FC = () => {
       <UserList>
         <AnimatePresence>
           {Object.values(users).map((user) => (
-            <UserBadge
+            <DraggableUserBadge
               key={user.id}
-              $color={user.color}
-              $isActive={user.id === currentUserId}
+              user={user}
+              isActive={user.id === currentUserId}
               onClick={() => setCurrentUser(user.id === currentUserId ? null : user.id)}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {user.icon && <UserIcon>{user.icon}</UserIcon>}
-              <span>{user.name}</span>
-              <DeleteButton onClick={(e) => handleDeleteUser(user.id, e)}>
-                ×
-              </DeleteButton>
-            </UserBadge>
+              onDelete={(e) => handleDeleteUser(user.id, e)}
+            />
           ))}
         </AnimatePresence>
         

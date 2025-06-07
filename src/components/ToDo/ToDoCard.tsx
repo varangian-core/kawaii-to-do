@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { ToDo } from '../../store/boardStore';
 import { useBoardStore } from '../../store/boardStore';
@@ -10,7 +11,7 @@ import { useUserStore } from '../../store/userStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 
-const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string }>`
+const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string; $isOver?: boolean }>`
   background: ${props => {
     if (!props.backgroundImage) {
       return 'linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%)';
@@ -33,6 +34,8 @@ const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  border: ${props => props.$isOver ? '2px solid #667eea' : '2px solid transparent'};
+  transition: border-color 0.2s ease;
   
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -128,11 +131,15 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setNodeRef: setSortableRef,
     transform,
     transition,
     isDragging: isSortableDragging,
   } = useSortable({ id: task.id });
+
+  const { isOver, setNodeRef: setDroppableRef } = useDroppable({
+    id: task.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -175,10 +182,14 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
 
   return (
     <CardContainer
-      ref={setNodeRef}
+      ref={(node) => {
+        setSortableRef(node);
+        setDroppableRef(node);
+      }}
       style={style}
       isDragging={isDragging || isSortableDragging}
       backgroundImage={task.backgroundImageUrl}
+      $isOver={isOver}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
