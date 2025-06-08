@@ -11,6 +11,7 @@ import { useUserStore } from '../../store/userStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { CircularProgress } from '../common/CircularProgress';
+import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 
 const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string; $isOver?: boolean }>`
   background: ${props => {
@@ -134,6 +135,7 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
   const { users, currentUserId } = useUserStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(task.content);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   const assignedUser = task.assignedUserId ? users[task.assignedUserId] : null;
 
@@ -162,10 +164,15 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
     setIsEditing(false);
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Delete this task?')) {
-      deleteTask(task.id);
-    }
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    deleteTask(task.id);
+    setShowDeleteModal(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -205,8 +212,9 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
       $isOver={isOver}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      exit={{ opacity: 0, scale: 0.8, y: -20 }}
       transition={{ duration: 0.2 }}
+      layout
       {...attributes}
       {...listeners}
     >
@@ -267,16 +275,20 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
             🎨
           </ActionButton>
           <DeleteButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDelete();
-            }}
+            onClick={handleDelete}
             title="Delete task"
           >
             🗑️
           </DeleteButton>
         </ButtonGroup>
       </ActionsContainer>
+
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        taskContent={task.content}
+      />
     </CardContainer>
   );
 };

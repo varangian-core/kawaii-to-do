@@ -89,6 +89,12 @@ export const useBoardStore = create<BoardState>()(
 
         deleteTask: (taskId: string) => {
           set((state) => {
+            // Ensure the task exists before attempting to delete
+            if (!state.tasks[taskId]) {
+              console.warn(`Task ${taskId} not found`);
+              return state;
+            }
+
             const newTasks = { ...state.tasks };
             delete newTasks[taskId];
 
@@ -100,6 +106,7 @@ export const useBoardStore = create<BoardState>()(
               };
             });
 
+            console.log(`Deleted task ${taskId}`);
             return {
               tasks: newTasks,
               columns: newColumns,

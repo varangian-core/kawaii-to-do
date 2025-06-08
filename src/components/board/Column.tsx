@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { useSortable } from '@dnd-kit/sortable';
@@ -181,9 +181,11 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
         strategy={verticalListSortingStrategy}
       >
         <TasksContainer>
-          {tasks.map((task) => (
-            <ToDoCard key={task.id} task={task} />
-          ))}
+          <AnimatePresence>
+            {tasks.map((task) => (
+              <ToDoCard key={task.id} task={task} />
+            ))}
+          </AnimatePresence>
         </TasksContainer>
       </SortableContext>
 
