@@ -1,6 +1,9 @@
 import React from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
+import { isUsingFirebase } from '../../lib/storageAdapter';
+import { UserFilterDropdown } from '../common/UserFilterDropdown';
+import { useUIStore } from '../../store/uiStore';
 
 const floatAnimation = keyframes`
   0%, 100% {
@@ -130,7 +133,41 @@ const Sparkle = styled.span<{ $delay?: string }>`
   animation-delay: ${props => props.$delay || '0s'};
 `;
 
+const StorageIndicator = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  backdrop-filter: blur(10px);
+  z-index: 10;
+`;
+
+const StorageIcon = styled.span`
+  font-size: 1rem;
+`;
+
+const ControlsContainer = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 10;
+`;
+
 export const Header: React.FC = () => {
+  const usingFirebase = isUsingFirebase();
+  const { isEditMode } = useUIStore();
+  
   return (
     <HeaderContainer
       initial={{ y: -50, opacity: 0 }}
@@ -142,6 +179,17 @@ export const Header: React.FC = () => {
       <FloatingHeart>💖</FloatingHeart>
       <FloatingHeart>💗</FloatingHeart>
       <FloatingHeart>💝</FloatingHeart>
+      
+      <StorageIndicator>
+        <StorageIcon>{usingFirebase ? '☁️' : '💾'}</StorageIcon>
+        <span>{usingFirebase ? 'Cloud Storage' : 'Local Storage'}</span>
+      </StorageIndicator>
+      
+      {isEditMode && (
+        <ControlsContainer>
+          <UserFilterDropdown />
+        </ControlsContainer>
+      )}
       
       <TitleContainer>
         <Title>

@@ -5,7 +5,7 @@ export interface ToDo {
   id: string;
   content: string;
   backgroundImageUrl?: string;
-  assignedUserId?: string;
+  assignedUserIds?: string[]; // Changed from single user to array of users
   progress?: number; // 0-100
 }
 
@@ -58,6 +58,7 @@ export const useBoardStore = create<BoardState>()(
             id: taskId,
             content,
             progress: 0,
+            assignedUserIds: [],
           };
 
           set((state) => ({

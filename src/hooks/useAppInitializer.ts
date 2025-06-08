@@ -1,37 +1,45 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useBoardStore } from '../store/boardStore';
 import { useUserStore } from '../store/userStore';
-
-const BOARD_STORAGE_KEY = 'kawaii-todo-board';
-const USER_STORAGE_KEY = 'kawaii-todo-users';
+import { storageAdapter, isUsingFirebase } from '../lib/storageAdapter';
 
 export function useAppInitializer() {
   const setBoardState = useBoardStore((state) => state.setBoardState);
   const isInitialized = useRef(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const initializeApp = useCallback(() => {
+  const initializeApp = useCallback(async () => {
     if (isInitialized.current) return;
     
     try {
       // Load saved board state
-      const savedBoardData = localStorage.getItem(BOARD_STORAGE_KEY);
-      if (savedBoardData) {
-        const parsedData = JSON.parse(savedBoardData);
-        if (parsedData && Object.keys(parsedData).length > 0) {
-          setBoardState(parsedData);
-        }
+      const boardData = await storageAdapter.loadBoardData();
+      if (boardData && Object.keys(boardData).length > 0) {
+        setBoardState(boardData);
       }
       
       // Load saved user state
-      const savedUserData = localStorage.getItem(USER_STORAGE_KEY);
-      if (savedUserData) {
-        const parsedUserData = JSON.parse(savedUserData);
-        if (parsedUserData && parsedUserData.users) {
-          useUserStore.setState(parsedUserData);
-        }
+      const userData = await storageAdapter.loadUserData();
+      if (userData && userData.users) {
+        useUserStore.setState(userData);
       }
       
       isInitialized.current = true;
+      
+      // Set up real-time listeners if using Firebase
+      if (isUsingFirebase() && storageAdapter.subscribeToBoardChanges) {
+        // Subscribe to board changes
+        storageAdapter.subscribeToBoardChanges((data) => {
+          setBoardState(data);
+        });
+        
+        // Subscribe to user changes
+        if (storageAdapter.subscribeToUserChanges) {
+          storageAdapter.subscribeToUserChanges((data) => {
+            useUserStore.setState(data);
+          });
+        }
+      }
     } catch (error) {
       console.error('Error initializing app:', error);
     }
@@ -42,12 +50,16 @@ export function useAppInitializer() {
     const unsubscribe = useBoardStore.subscribe(
       (state) => {
         if (isInitialized.current) {
-          const dataToSave = {
-            tasks: state.tasks,
-            columns: state.columns,
-            columnOrder: state.columnOrder,
-          };
-          localStorage.setItem(BOARD_STORAGE_KEY, JSON.stringify(dataToSave));
+          // Debounce saves to avoid too many writes
+          clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = setTimeout(() => {
+            const dataToSave = {
+              tasks: state.tasks,
+              columns: state.columns,
+              columnOrder: state.columnOrder,
+            };
+            storageAdapter.saveBoardData(dataToSave);
+          }, 500);
         }
       }
     );
@@ -56,11 +68,15 @@ export function useAppInitializer() {
     const unsubscribeUsers = useUserStore.subscribe(
       (state) => {
         if (isInitialized.current) {
-          const userDataToSave = {
-            users: state.users,
-            currentUserId: state.currentUserId,
-          };
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userDataToSave));
+          // Debounce saves to avoid too many writes
+          clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = setTimeout(() => {
+            const userDataToSave = {
+              users: state.users,
+              currentUserId: state.currentUserId,
+            };
+            storageAdapter.saveUserData(userDataToSave);
+          }, 500);
         }
       }
     );
@@ -68,6 +84,7 @@ export function useAppInitializer() {
     return () => {
       unsubscribe();
       unsubscribeUsers();
+      clearTimeout(saveTimeoutRef.current);
     };
   }, []);
 

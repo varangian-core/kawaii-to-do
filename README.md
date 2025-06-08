@@ -188,8 +188,15 @@ firebase init hosting:github
 - **Framer Motion** - Animations
 - **@dnd-kit** - Drag and drop
 - **Firebase Hosting** - Deployment
+- **Firebase Firestore** - Cloud database (when deployed)
 
-Data is persisted locally using browser localStorage.
+## Data Storage 💾
+
+The app uses a hybrid storage approach:
+- **Local Development**: Uses browser localStorage (💾 icon in header)
+- **Production (Firebase)**: Uses Firestore cloud database (☁️ icon in header)
+
+This means your todos automatically sync across devices when using the deployed version!
 
 ## License 📄
 

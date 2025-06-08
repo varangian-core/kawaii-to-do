@@ -134,6 +134,8 @@ dist
 firebase-debug.log
 .firebaserc.local
 src/lib/firebase.ts
+scripts/init-firestore.js
+public/verify-firestore.html
 
 # IDE
 .vscode/

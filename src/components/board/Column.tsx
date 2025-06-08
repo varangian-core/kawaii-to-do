@@ -8,8 +8,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { Column as ColumnType, ToDo } from '../../store/boardStore';
 import { ToDoCard } from '../ToDo/ToDoCard';
 import { useBoardStore } from '../../store/boardStore';
+import { useUIStore } from '../../store/uiStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
+import { ColumnFilterButton } from '../common/ColumnFilterButton';
 
 const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
   background: rgba(255, 255, 255, 0.85);
@@ -34,6 +36,7 @@ const ColumnHeader = styled.div`
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #f0f0f0;
+  position: relative;
 `;
 
 const ColumnTitle = styled.h3`
@@ -44,11 +47,12 @@ const ColumnTitle = styled.h3`
 `;
 
 const TaskCount = styled.span`
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: #666;
   background: #f0f0f0;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
+  padding: 0.15rem 0.4rem;
+  border-radius: 8px;
+  font-weight: 500;
 `;
 
 const TasksContainer = styled.div`
@@ -77,6 +81,12 @@ const DeleteButton = styled(Button)`
   }
 `;
 
+const HeaderControls = styled.div`
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+`;
+
 interface ColumnProps {
   column: ColumnType;
   tasks: ToDo[];
@@ -84,10 +94,26 @@ interface ColumnProps {
 
 export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
   const { addTask, deleteColumn, updateColumn } = useBoardStore();
+  const { selectedUserFilters, columnUserFilters, filterMode } = useUIStore();
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskContent, setNewTaskContent] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(column.title);
+
+  // Determine which filters to use based on filter mode
+  const activeFilters = filterMode === 'column' 
+    ? (columnUserFilters[column.id] || [])
+    : selectedUserFilters;
+
+  // Filter tasks based on active filters
+  const filteredTasks = activeFilters.length > 0
+    ? tasks.filter(task => {
+        if (!task.assignedUserIds || task.assignedUserIds.length === 0) {
+          return false;
+        }
+        return task.assignedUserIds.some(userId => activeFilters.includes(userId));
+      })
+    : tasks;
 
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: column.id,
@@ -170,19 +196,20 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
             {column.title}
           </ColumnTitle>
         )}
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <TaskCount>{tasks.length}</TaskCount>
+        <HeaderControls>
+          <TaskCount>{filteredTasks.length}</TaskCount>
+          <ColumnFilterButton columnId={column.id} />
           <DeleteButton onClick={handleDeleteColumn}>×</DeleteButton>
-        </div>
+        </HeaderControls>
       </ColumnHeader>
 
       <SortableContext
-        items={tasks.map(task => task.id)}
+        items={filteredTasks.map(task => task.id)}
         strategy={verticalListSortingStrategy}
       >
         <TasksContainer>
           <AnimatePresence>
-            {tasks.map((task) => (
+            {filteredTasks.map((task) => (
               <ToDoCard key={task.id} task={task} />
             ))}
           </AnimatePresence>

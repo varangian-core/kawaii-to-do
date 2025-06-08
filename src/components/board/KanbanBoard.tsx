@@ -100,7 +100,12 @@ export const KanbanBoard: React.FC = () => {
     if (activeType === 'user' && tasks[overId]) {
       const user = active.data.current?.user;
       if (user) {
-        updateTask(overId, { assignedUserId: user.id });
+        const currentUserIds = tasks[overId].assignedUserIds || [];
+        if (!currentUserIds.includes(user.id)) {
+          updateTask(overId, { 
+            assignedUserIds: [...currentUserIds, user.id] 
+          });
+        }
       }
       setActiveId(null);
       setActiveType(null);

@@ -12,6 +12,7 @@ import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { CircularProgress } from '../common/CircularProgress';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
+import { mixColors } from '../../utils/colorUtils';
 
 const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string; $isOver?: boolean }>`
   background: ${props => {
@@ -137,7 +138,12 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
   const [editedContent, setEditedContent] = useState(task.content);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
-  const assignedUser = task.assignedUserId ? users[task.assignedUserId] : null;
+  const assignedUsers = task.assignedUserIds?.map(id => users[id]).filter(Boolean) || [];
+  
+  // Calculate mixed color for multiple users
+  const badgeColor = assignedUsers.length > 1 
+    ? mixColors(assignedUsers.map(u => u.color))
+    : assignedUsers[0]?.color || '#ddd';
 
   const {
     attributes,
@@ -187,11 +193,19 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (currentUserId) {
-      // If clicked user is already assigned, unassign. Otherwise assign current user
-      if (task.assignedUserId === currentUserId) {
-        updateTask(task.id, { assignedUserId: undefined });
+      const currentUserIds = task.assignedUserIds || [];
+      const isAssigned = currentUserIds.includes(currentUserId);
+      
+      if (isAssigned) {
+        // Remove current user from assigned users
+        updateTask(task.id, { 
+          assignedUserIds: currentUserIds.filter(id => id !== currentUserId) 
+        });
       } else {
-        updateTask(task.id, { assignedUserId: currentUserId });
+        // Add current user to assigned users
+        updateTask(task.id, { 
+          assignedUserIds: [...currentUserIds, currentUserId] 
+        });
       }
     }
   };
@@ -218,18 +232,32 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
       {...attributes}
       {...listeners}
     >
-      {assignedUser && (
+      {assignedUsers.length > 0 && (
         <UserBadge 
-          $color={assignedUser.color}
+          $color={badgeColor}
           onClick={handleUserClick}
-          title={`Assigned to ${assignedUser.name}`}
+          title={`Assigned to ${assignedUsers.map(u => u.name).join(', ')}`}
         >
-          {assignedUser.icon && <UserIcon>{assignedUser.icon}</UserIcon>}
-          <span>{assignedUser.name}</span>
+          {assignedUsers.length === 1 ? (
+            <>
+              {assignedUsers[0].icon && <UserIcon>{assignedUsers[0].icon}</UserIcon>}
+              <span>{assignedUsers[0].name}</span>
+            </>
+          ) : assignedUsers.length === 2 ? (
+            <>
+              {assignedUsers[0].icon && <UserIcon>{assignedUsers[0].icon}</UserIcon>}
+              <span>{assignedUsers[0].name} / {assignedUsers[1].name}</span>
+            </>
+          ) : (
+            <>
+              {assignedUsers[0].icon && <UserIcon>{assignedUsers[0].icon}</UserIcon>}
+              <span>{assignedUsers[0].name} +{assignedUsers.length - 1}</span>
+            </>
+          )}
         </UserBadge>
       )}
       
-      {!assignedUser && currentUserId && (
+      {assignedUsers.length === 0 && currentUserId && (
         <UserBadge 
           $color="#ddd"
           onClick={handleUserClick}

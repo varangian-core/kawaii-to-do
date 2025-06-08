@@ -1,0 +1,96 @@
+// Script to initialize Firestore with proper structure
+// Copy this file to init-firestore.js and replace with your Firebase config
+
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+
+// Your Firebase configuration
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Default board structure
+const defaultBoardData = {
+  tasks: {},
+  columns: {
+    'column-1': {
+      id: 'column-1',
+      title: 'To Do',
+      taskIds: []
+    },
+    'column-2': {
+      id: 'column-2',
+      title: 'In Progress',
+      taskIds: []
+    },
+    'column-3': {
+      id: 'column-3',
+      title: 'Done',
+      taskIds: []
+    }
+  },
+  columnOrder: ['column-1', 'column-2', 'column-3']
+};
+
+// Default user structure
+const defaultUserData = {
+  users: {},
+  currentUserId: null
+};
+
+async function initializeFirestore() {
+  console.log('🚀 Initializing Firestore structure...');
+  
+  try {
+    // Check if board document exists
+    const boardRef = doc(db, 'boards', 'default-board');
+    const boardDoc = await getDoc(boardRef);
+    
+    if (!boardDoc.exists()) {
+      console.log('📋 Creating default board document...');
+      await setDoc(boardRef, defaultBoardData);
+      console.log('✅ Board document created successfully!');
+    } else {
+      console.log('✅ Board document already exists');
+    }
+    
+    // Check if users document exists
+    const usersRef = doc(db, 'users', 'default-users');
+    const usersDoc = await getDoc(usersRef);
+    
+    if (!usersDoc.exists()) {
+      console.log('👥 Creating default users document...');
+      await setDoc(usersRef, defaultUserData);
+      console.log('✅ Users document created successfully!');
+    } else {
+      console.log('✅ Users document already exists');
+    }
+    
+    console.log('\n🎉 Firestore initialization complete!');
+    console.log('📍 Collections created:');
+    console.log('   - boards/default-board');
+    console.log('   - users/default-users');
+    
+  } catch (error) {
+    console.error('❌ Error initializing Firestore:', error);
+    console.log('\n🔧 Troubleshooting tips:');
+    console.log('1. Make sure Firestore is enabled in Firebase Console');
+    console.log('2. Check that your security rules allow read/write access');
+    console.log('3. Verify your Firebase configuration is correct');
+  }
+  
+  process.exit();
+}
+
+// Run the initialization
+initializeFirestore();
