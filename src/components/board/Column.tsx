@@ -18,13 +18,14 @@ const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1rem;
-  min-width: 300px;
-  max-width: 300px;
+  min-width: 320px;
+  max-width: 320px;
   box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
   border: 1px solid rgba(255, 182, 193, 0.3);
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 200px);
+  height: calc(100vh - 220px);
+  max-height: calc(100vh - 220px);
   opacity: ${props => props.isDragging ? 0.5 : 1};
   cursor: ${props => props.isDragging ? 'grabbing' : 'grab'};
 `;
@@ -58,17 +59,40 @@ const TaskCount = styled.span`
 const TasksContainer = styled.div`
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  gap: 1rem;
+  padding: 0.5rem;
   min-height: 100px;
+  max-height: calc(100vh - 350px);
+  
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+  }
 `;
 
 const AddTaskContainer = styled.div`
-  margin-top: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
   display: flex;
   gap: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 `;
 
 const DeleteButton = styled(Button)`

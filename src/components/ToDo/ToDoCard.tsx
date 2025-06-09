@@ -33,12 +33,14 @@ const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage
   opacity: ${props => props.isDragging ? 0.5 : 1};
   transform: ${props => props.isDragging ? 'scale(1.02)' : 'scale(1)'};
   position: relative;
-  min-height: 80px;
+  min-height: 120px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border: ${props => props.$isOver ? '2px solid #667eea' : '2px solid transparent'};
   transition: border-color 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
   
   &:hover {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -55,7 +57,10 @@ const ContentOverlay = styled.div<{ $hasBackground?: boolean }>`
     : 'transparent'};
   border-radius: 8px;
   padding: ${props => props.$hasBackground ? '0.5rem' : '0'};
-  margin-bottom: 0.5rem;
+  margin-bottom: auto;
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
 `;
 
 const TaskContent = styled.p`
@@ -70,9 +75,11 @@ const ActionsContainer = styled.div`
   gap: 0.5rem;
   justify-content: space-between;
   align-items: center;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
   position: relative;
   z-index: 2;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 `;
 
 const ActionButton = styled(Button)`

@@ -24,13 +24,33 @@ import { UserManager } from '../UserManager/UserManager';
 
 const BoardContainer = styled(motion.div)`
   display: flex;
-  gap: 1.5rem;
-  padding: 2rem 0;
+  gap: 2rem;
+  padding: 2rem 1rem;
   overflow-x: auto;
-  min-height: 600px;
-  align-items: flex-start;
+  overflow-y: hidden;
+  min-height: calc(100vh - 180px);
+  align-items: stretch;
   position: relative;
   z-index: 1;
+  
+  /* Custom scrollbar styling */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+  }
 `;
 
 const AddColumnButton = styled(Button)`
