@@ -15,6 +15,18 @@ export function useAppInitializer() {
       // Load saved board state
       const boardData = await storageAdapter.loadBoardData();
       if (boardData && Object.keys(boardData).length > 0) {
+        // Migrate old assignedUserId to assignedUserIds array
+        if (boardData.tasks) {
+          const migratedTasks = { ...boardData.tasks };
+          Object.keys(migratedTasks).forEach(taskId => {
+            const task = migratedTasks[taskId];
+            if ('assignedUserId' in task && !task.assignedUserIds) {
+              task.assignedUserIds = task.assignedUserId ? [task.assignedUserId] : [];
+              delete task.assignedUserId;
+            }
+          });
+          boardData.tasks = migratedTasks;
+        }
         setBoardState(boardData);
       }
       
@@ -30,6 +42,18 @@ export function useAppInitializer() {
       if (isUsingFirebase() && storageAdapter.subscribeToBoardChanges) {
         // Subscribe to board changes
         storageAdapter.subscribeToBoardChanges((data) => {
+          // Migrate old assignedUserId to assignedUserIds array
+          if (data.tasks) {
+            const migratedTasks = { ...data.tasks };
+            Object.keys(migratedTasks).forEach(taskId => {
+              const task = migratedTasks[taskId];
+              if ('assignedUserId' in task && !task.assignedUserIds) {
+                task.assignedUserIds = task.assignedUserId ? [task.assignedUserId] : [];
+                delete task.assignedUserId;
+              }
+            });
+            data.tasks = migratedTasks;
+          }
           setBoardState(data);
         });
         

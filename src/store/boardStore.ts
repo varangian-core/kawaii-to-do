@@ -21,7 +21,7 @@ export interface BoardState {
   columnOrder: string[];
   
   // Actions
-  addTask: (columnId: string, content: string) => void;
+  addTask: (columnId: string, content: string, backgroundImageUrl?: string) => void;
   updateTask: (taskId: string, updates: Partial<ToDo>) => void;
   deleteTask: (taskId: string) => void;
   moveTask: (taskId: string, sourceColumnId: string, destColumnId: string, destIndex: number) => void;
@@ -52,13 +52,14 @@ export const useBoardStore = create<BoardState>()(
       (set) => ({
         ...initialState,
 
-        addTask: (columnId: string, content: string) => {
+        addTask: (columnId: string, content: string, backgroundImageUrl?: string) => {
           const taskId = generateId();
           const newTask: ToDo = {
             id: taskId,
             content,
             progress: 0,
             assignedUserIds: [],
+            ...(backgroundImageUrl && { backgroundImageUrl }),
           };
 
           set((state) => ({

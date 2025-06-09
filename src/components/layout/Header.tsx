@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import { isUsingFirebase } from '../../lib/storageAdapter';
 import { UserFilterDropdown } from '../common/UserFilterDropdown';
 import { useUIStore } from '../../store/uiStore';
+import { BatchImportModal } from '../BatchImport/BatchImportModal';
 
 const floatAnimation = keyframes`
   0%, 100% {
@@ -164,11 +165,40 @@ const ControlsContainer = styled.div`
   z-index: 10;
 `;
 
+const BatchImportButton = styled.button`
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
 export const Header: React.FC = () => {
   const usingFirebase = isUsingFirebase();
   const { isEditMode } = useUIStore();
+  const [showBatchImport, setShowBatchImport] = useState(false);
   
   return (
+    <>
     <HeaderContainer
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -185,11 +215,15 @@ export const Header: React.FC = () => {
         <span>{usingFirebase ? 'Cloud Storage' : 'Local Storage'}</span>
       </StorageIndicator>
       
-      {isEditMode && (
-        <ControlsContainer>
-          <UserFilterDropdown />
-        </ControlsContainer>
-      )}
+      <ControlsContainer>
+        <BatchImportButton 
+          onClick={() => setShowBatchImport(true)}
+          title="Batch Import Tasks"
+        >
+          📥
+        </BatchImportButton>
+        {isEditMode && <UserFilterDropdown />}
+      </ControlsContainer>
       
       <TitleContainer>
         <Title>
@@ -200,5 +234,11 @@ export const Header: React.FC = () => {
         <Subtitle>Let's make our tasks fun and beautiful! 💕</Subtitle>
       </TitleContainer>
     </HeaderContainer>
+    
+    <BatchImportModal 
+      isOpen={showBatchImport} 
+      onClose={() => setShowBatchImport(false)} 
+    />
+    </>
   );
 };
