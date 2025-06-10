@@ -9,6 +9,7 @@ export interface UIState {
   selectedUserFilters: string[]; // Global user filters
   columnUserFilters: Record<string, string[]>; // Per-column user filters
   filterMode: 'global' | 'column'; // Whether to use global or per-column filters
+  autoDeleteHours: number; // Hours after which tasks in Done column are auto-deleted (0 = disabled)
   
   // Actions
   openImagePicker: (targetTaskId: string) => void;
@@ -23,6 +24,7 @@ export interface UIState {
   setColumnFilters: (columnId: string, userIds: string[]) => void;
   setFilterMode: (mode: 'global' | 'column') => void;
   applyGlobalFiltersToAllColumns: () => void;
+  setAutoDeleteHours: (hours: number) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -34,6 +36,7 @@ export const useUIStore = create<UIState>()(
       selectedUserFilters: [],
       columnUserFilters: {},
       filterMode: 'global',
+      autoDeleteHours: 0,
 
       openImagePicker: (targetTaskId: string) => {
         set({
@@ -128,6 +131,10 @@ export const useUIStore = create<UIState>()(
             filterMode: 'column',
           };
         });
+      },
+
+      setAutoDeleteHours: (hours: number) => {
+        set({ autoDeleteHours: hours });
       },
     }),
     {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useBoardStore } from '../store/boardStore';
 import { useUserStore } from '../store/userStore';
+import { useUIStore } from '../store/uiStore';
 import { storageAdapter, isUsingFirebase } from '../lib/storageAdapter';
 
 export function useAppInitializer() {
@@ -110,6 +111,93 @@ export function useAppInitializer() {
       unsubscribeUsers();
       clearTimeout(saveTimeoutRef.current);
     };
+  }, []);
+
+  // Auto-delete functionality
+  useEffect(() => {
+    const checkAndDeleteOldTasks = () => {
+      const { autoDeleteHours } = useUIStore.getState();
+      if (autoDeleteHours === 0) return; // Auto-delete disabled
+
+      const { tasks, columns, deleteTask } = useBoardStore.getState();
+      const currentTime = Date.now();
+      const deleteThreshold = autoDeleteHours * 60 * 60 * 1000; // Convert hours to milliseconds
+
+      // Find the Done column
+      const doneColumn = Object.values(columns).find(col => 
+        col.title.toLowerCase() === 'done'
+      );
+
+      if (!doneColumn) return;
+
+      // Check each task in Done column
+      doneColumn.taskIds.forEach(taskId => {
+        const task = tasks[taskId];
+        if (task && task.movedToDoneAt) {
+          // Skip auto-deletion for tasks with the "daily" icon
+          if (task.icons?.includes('daily')) {
+            return; // Skip this task
+          }
+          
+          const taskAge = currentTime - task.movedToDoneAt;
+          if (taskAge > deleteThreshold) {
+            console.log(`Auto-deleting task: ${task.content} (aged ${Math.round(taskAge / 1000 / 60 / 60)} hours)`);
+            deleteTask(taskId);
+          }
+        }
+      });
+    };
+
+    // Check immediately on mount
+    checkAndDeleteOldTasks();
+
+    // Set up interval to check every minute
+    const intervalId = setInterval(checkAndDeleteOldTasks, 60000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Recurring task functionality
+  useEffect(() => {
+    const checkAndMoveRecurringTasks = () => {
+      const { tasks, columns, moveTask, updateTask } = useBoardStore.getState();
+      const currentTime = Date.now();
+      const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+      // Find To Do and Done columns
+      const todoColumn = Object.values(columns).find(col => 
+        col.title.toLowerCase() === 'to do'
+      );
+      const doneColumn = Object.values(columns).find(col => 
+        col.title.toLowerCase() === 'done'
+      );
+
+      if (!todoColumn || !doneColumn) return;
+
+      // Check each task in Done column for daily icon
+      doneColumn.taskIds.forEach((taskId) => {
+        const task = tasks[taskId];
+        if (task && task.icons?.includes('daily') && task.lastUpdated) {
+          const timeSinceLastUpdate = currentTime - task.lastUpdated;
+          
+          // If more than 24 hours have passed, move back to To Do
+          if (timeSinceLastUpdate >= twentyFourHours) {
+            console.log(`Moving recurring task back to To Do: ${task.content}`);
+            // Reset progress to 0 when moving back
+            updateTask(taskId, { progress: 0, movedToDoneAt: undefined });
+            moveTask(taskId, doneColumn.id, todoColumn.id, todoColumn.taskIds.length);
+          }
+        }
+      });
+    };
+
+    // Check immediately on mount
+    checkAndMoveRecurringTasks();
+
+    // Set up interval to check every minute
+    const intervalId = setInterval(checkAndMoveRecurringTasks, 60000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return { initializeApp };

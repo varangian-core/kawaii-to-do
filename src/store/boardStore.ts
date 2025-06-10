@@ -7,6 +7,9 @@ export interface ToDo {
   backgroundImageUrl?: string;
   assignedUserIds?: string[]; // Changed from single user to array of users
   progress?: number; // 0-100
+  movedToDoneAt?: number; // Timestamp when task was moved to Done column
+  icons?: string[]; // Array of icon identifiers
+  lastUpdated?: number; // Timestamp for last update (used for recurring tasks)
 }
 
 export interface Column {
@@ -21,7 +24,7 @@ export interface BoardState {
   columnOrder: string[];
   
   // Actions
-  addTask: (columnId: string, content: string, backgroundImageUrl?: string) => void;
+  addTask: (columnId: string, content: string, backgroundImageUrl?: string) => string;
   updateTask: (taskId: string, updates: Partial<ToDo>) => void;
   deleteTask: (taskId: string) => void;
   moveTask: (taskId: string, sourceColumnId: string, destColumnId: string, destIndex: number) => void;
@@ -59,6 +62,7 @@ export const useBoardStore = create<BoardState>()(
             content,
             progress: 0,
             assignedUserIds: [],
+            lastUpdated: Date.now(),
             ...(backgroundImageUrl && { backgroundImageUrl }),
           };
 
@@ -75,6 +79,8 @@ export const useBoardStore = create<BoardState>()(
               },
             },
           }));
+          
+          return taskId;
         },
 
         updateTask: (taskId: string, updates: Partial<ToDo>) => {
@@ -84,6 +90,7 @@ export const useBoardStore = create<BoardState>()(
               [taskId]: {
                 ...state.tasks[taskId],
                 ...updates,
+                lastUpdated: Date.now(),
               },
             },
           }));
@@ -134,7 +141,18 @@ export const useBoardStore = create<BoardState>()(
             // Add to destination
             destTaskIds.splice(destIndex, 0, taskId);
 
+            // Update task with timestamps
+            const updatedTasks = { ...state.tasks };
+            const isMovingToDone = destColumn.title.toLowerCase() === 'done' && sourceColumnId !== destColumnId;
+            
+            updatedTasks[taskId] = {
+              ...updatedTasks[taskId],
+              lastUpdated: Date.now(),
+              ...(isMovingToDone && { movedToDoneAt: Date.now() }),
+            };
+
             return {
+              tasks: updatedTasks,
               columns: {
                 ...state.columns,
                 [sourceColumnId]: {

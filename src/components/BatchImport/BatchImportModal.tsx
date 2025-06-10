@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { Modal } from '../common/Modal';
 import { Button } from '../common/Button';
 import { useBoardStore } from '../../store/boardStore';
+import { useUserStore } from '../../store/userStore';
+import { parseTasks } from '../../utils/taskParser';
 
 const TextArea = styled.textarea`
   width: 100%;
@@ -66,6 +68,36 @@ const ResultMessage = styled.div<{ $success: boolean }>`
   border: 1px solid ${props => props.$success ? '#c3e6cb' : '#f5c6cb'};
 `;
 
+const UserAssignmentSection = styled.div`
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+`;
+
+const UserSelect = styled.select`
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #ff6ec4;
+  }
+`;
+
+const UserSelectLabel = styled.label`
+  display: block;
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+`;
+
 interface BatchImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -81,13 +113,19 @@ export const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onCl
   const [inputText, setInputText] = useState('');
   const [resultMessage, setResultMessage] = useState<{ text: string; success: boolean } | null>(null);
   const [availableImages, setAvailableImages] = useState<string[]>([]);
-  const { tasks, columns, addTask } = useBoardStore();
+  const [selectedUserId, setSelectedUserId] = useState<string>('none');
+  const { tasks, columns, addTask, updateTask } = useBoardStore();
+  const { users, currentUserId } = useUserStore();
 
   useEffect(() => {
     if (isOpen) {
       fetchAvailableImages();
+      // Default to current user if available
+      if (currentUserId) {
+        setSelectedUserId(currentUserId);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, currentUserId]);
 
   const fetchAvailableImages = async () => {
     try {
@@ -118,31 +156,6 @@ export const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onCl
     return availableImages[randomIndex];
   };
 
-  const parseTasks = (text: string): string[] => {
-    const lines = text.split('\n').filter(line => line.trim());
-    const tasks: string[] = [];
-
-    lines.forEach(line => {
-      // Remove common bullet points and list markers
-      let cleanedLine = line
-        .replace(/^[-*•]\s*/, '')
-        .replace(/^\d+\.\s*/, '')
-        .replace(/^- \[ \]\s*/, '')
-        .replace(/^- \[x\]\s*/, '')
-        .trim();
-      
-      // Remove brackets if present
-      cleanedLine = cleanedLine.replace(/\[([^\]]+)\]/g, '$1').trim();
-      
-      // Capitalize first letter
-      if (cleanedLine) {
-        cleanedLine = cleanedLine.charAt(0).toUpperCase() + cleanedLine.slice(1);
-        tasks.push(cleanedLine);
-      }
-    });
-
-    return tasks;
-  };
 
   const checkDuplicateTask = (content: string): boolean => {
     const normalizedContent = content.toLowerCase().trim();
@@ -175,7 +188,13 @@ export const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onCl
     parsedTasks.forEach(taskContent => {
       if (!checkDuplicateTask(taskContent)) {
         const randomImage = getRandomImage();
-        addTask(todoColumn.id, taskContent, randomImage);
+        const newTaskId = addTask(todoColumn.id, taskContent, randomImage);
+        
+        // Assign user if selected
+        if (selectedUserId !== 'none') {
+          updateTask(newTaskId, { assignedUserIds: [selectedUserId] });
+        }
+        
         importedCount++;
       } else {
         duplicateCount++;
@@ -222,12 +241,29 @@ export const BatchImportModal: React.FC<BatchImportModalProps> = ({ isOpen, onCl
         placeholder="Paste your tasks here...
 
 Example:
-- Complete project documentation
-- Review pull requests
-- [ ] Update dependencies
-1. Schedule team meeting
-2. Prepare presentation"
+- [ ] Assess latest real estate news (30 min)
+- [x] Review pull requests
+- [ ] (Optional) Update dependencies (2 hours)
+- Look into upgrading the internet — Note: Quest idea"
       />
+      
+      <UserAssignmentSection>
+        <UserSelectLabel htmlFor="user-assignment">
+          Assign imported tasks to:
+        </UserSelectLabel>
+        <UserSelect 
+          id="user-assignment"
+          value={selectedUserId} 
+          onChange={(e) => setSelectedUserId(e.target.value)}
+        >
+          <option value="none">No assignment</option>
+          {Object.values(users).map(user => (
+            <option key={user.id} value={user.id}>
+              {user.icon} {user.name}
+            </option>
+          ))}
+        </UserSelect>
+      </UserAssignmentSection>
       
       {resultMessage && (
         <ResultMessage $success={resultMessage.success}>

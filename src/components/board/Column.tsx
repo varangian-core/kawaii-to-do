@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -24,7 +24,7 @@ const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
   border: 1px solid rgba(255, 182, 193, 0.3);
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 220px);
+  min-height: 400px;
   max-height: calc(100vh - 220px);
   opacity: ${props => props.isDragging ? 0.5 : 1};
   cursor: ${props => props.isDragging ? 'grabbing' : 'grab'};
@@ -64,8 +64,7 @@ const TasksContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   padding: 0.5rem;
-  min-height: 100px;
-  max-height: calc(100vh - 350px);
+  min-height: 60px;
   
   /* Custom scrollbar styling */
   &::-webkit-scrollbar {
@@ -93,6 +92,7 @@ const AddTaskContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
 `;
 
 const DeleteButton = styled(Button)`
@@ -111,18 +111,57 @@ const HeaderControls = styled.div`
   align-items: center;
 `;
 
+const DuplicateNotification = styled(motion.div)`
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ff6b6b;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  white-space: nowrap;
+  z-index: 10;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #ff6b6b;
+  }
+`;
+
 interface ColumnProps {
   column: ColumnType;
   tasks: ToDo[];
 }
 
 export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
-  const { addTask, deleteColumn, updateColumn } = useBoardStore();
+  const { addTask, deleteColumn, updateColumn, tasks: allTasks } = useBoardStore();
   const { selectedUserFilters, columnUserFilters, filterMode } = useUIStore();
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskContent, setNewTaskContent] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(column.title);
+  const [showDuplicateNotification, setShowDuplicateNotification] = useState(false);
+
+  // Auto-dismiss duplicate notification
+  useEffect(() => {
+    if (showDuplicateNotification) {
+      const timer = setTimeout(() => {
+        setShowDuplicateNotification(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDuplicateNotification]);
 
   // Determine which filters to use based on filter mode
   const activeFilters = filterMode === 'column' 
@@ -158,8 +197,19 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
   };
 
   const handleAddTask = () => {
-    if (newTaskContent.trim()) {
-      addTask(column.id, newTaskContent.trim());
+    const trimmedContent = newTaskContent.trim();
+    if (trimmedContent) {
+      // Check for duplicate task across all columns
+      const isDuplicate = Object.values(allTasks).some(
+        task => task.content.toLowerCase().trim() === trimmedContent.toLowerCase()
+      );
+      
+      if (isDuplicate) {
+        setShowDuplicateNotification(true);
+        return;
+      }
+      
+      addTask(column.id, trimmedContent);
       setNewTaskContent('');
       setIsAddingTask(false);
     }
@@ -241,6 +291,18 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
       </SortableContext>
 
       <AddTaskContainer>
+        <AnimatePresence>
+          {showDuplicateNotification && (
+            <DuplicateNotification
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              This task already exists!
+            </DuplicateNotification>
+          )}
+        </AnimatePresence>
         {isAddingTask ? (
           <>
             <Input
@@ -258,6 +320,7 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
             <Button onClick={() => {
               setIsAddingTask(false);
               setNewTaskContent('');
+              setShowDuplicateNotification(false);
             }}>
               Cancel
             </Button>

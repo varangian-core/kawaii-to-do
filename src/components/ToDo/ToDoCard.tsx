@@ -13,6 +13,7 @@ import { Input } from '../common/Input';
 import { CircularProgress } from '../common/CircularProgress';
 import { DeleteConfirmModal } from '../common/DeleteConfirmModal';
 import { mixColors } from '../../utils/colorUtils';
+import { ICON_TYPES } from '../IconPalette/IconPalette';
 
 const CardContainer = styled(motion.div)<{ isDragging?: boolean; backgroundImage?: string; $isOver?: boolean }>`
   background: ${props => {
@@ -80,6 +81,41 @@ const ActionsContainer = styled.div`
   z-index: 2;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
+`;
+
+const IconsContainer = styled.div`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+  margin-left: 8px;
+`;
+
+const IconBadge = styled.div<{ $bgColor: string; $iconColor: string }>`
+  background: ${props => props.$bgColor};
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke: ${props => props.$iconColor};
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 `;
 
 const ActionButton = styled(Button)`
@@ -163,6 +199,10 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
 
   const { isOver, setNodeRef: setDroppableRef } = useDroppable({
     id: task.id,
+    data: {
+      type: 'task',
+      task,
+    },
   });
 
   const style = {
@@ -219,6 +259,23 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
 
   const handleProgressChange = (newProgress: number) => {
     updateTask(task.id, { progress: newProgress });
+  };
+
+  const handleIconClick = (iconType: string) => {
+    const currentIcons = task.icons || [];
+    const iconIndex = currentIcons.indexOf(iconType);
+    
+    if (iconIndex >= 0) {
+      // Remove icon if it exists
+      updateTask(task.id, {
+        icons: currentIcons.filter(icon => icon !== iconType)
+      });
+    } else {
+      // Add icon if it doesn't exist
+      updateTask(task.id, {
+        icons: [...currentIcons, iconType]
+      });
+    }
   };
 
   return (
@@ -299,6 +356,27 @@ export const ToDoCard: React.FC<ToDoCardProps> = ({ task, isDragging = false }) 
           progress={task.progress || 0} 
           onProgressChange={handleProgressChange}
         />
+        <IconsContainer>
+          {task.icons?.map(iconType => {
+            const icon = ICON_TYPES[iconType as keyof typeof ICON_TYPES];
+            if (!icon) return null;
+            const IconComponent = icon.icon;
+            return (
+              <IconBadge
+                key={iconType}
+                $bgColor={icon.bgColor}
+                $iconColor={icon.iconColor}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleIconClick(iconType);
+                }}
+                title={`${icon.label} - Click to remove`}
+              >
+                <IconComponent />
+              </IconBadge>
+            );
+          })}
+        </IconsContainer>
         <ButtonGroup>
           <ActionButton
             onClick={(e) => {

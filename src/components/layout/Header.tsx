@@ -5,6 +5,7 @@ import { isUsingFirebase } from '../../lib/storageAdapter';
 import { UserFilterDropdown } from '../common/UserFilterDropdown';
 import { useUIStore } from '../../store/uiStore';
 import { BatchImportModal } from '../BatchImport/BatchImportModal';
+import { BatchDeleteModal } from '../BatchDelete/BatchDeleteModal';
 
 const floatAnimation = keyframes`
   0%, 100% {
@@ -165,7 +166,7 @@ const ControlsContainer = styled.div`
   z-index: 10;
 `;
 
-const BatchImportButton = styled.button`
+const ActionButton = styled.button`
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
@@ -196,6 +197,7 @@ export const Header: React.FC = () => {
   const usingFirebase = isUsingFirebase();
   const { isEditMode } = useUIStore();
   const [showBatchImport, setShowBatchImport] = useState(false);
+  const [showBatchDelete, setShowBatchDelete] = useState(false);
   
   return (
     <>
@@ -216,12 +218,18 @@ export const Header: React.FC = () => {
       </StorageIndicator>
       
       <ControlsContainer>
-        <BatchImportButton 
+        <ActionButton 
           onClick={() => setShowBatchImport(true)}
           title="Batch Import Tasks"
         >
           📥
-        </BatchImportButton>
+        </ActionButton>
+        <ActionButton 
+          onClick={() => setShowBatchDelete(true)}
+          title="Batch Delete Tasks"
+        >
+          🗑️
+        </ActionButton>
         {isEditMode && <UserFilterDropdown />}
       </ControlsContainer>
       
@@ -238,6 +246,11 @@ export const Header: React.FC = () => {
     <BatchImportModal 
       isOpen={showBatchImport} 
       onClose={() => setShowBatchImport(false)} 
+    />
+    
+    <BatchDeleteModal 
+      isOpen={showBatchDelete} 
+      onClose={() => setShowBatchDelete(false)} 
     />
     </>
   );
