@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -76,7 +77,9 @@ interface ModalProps {
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  return (
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
     <AnimatePresence>
       {isOpen && (
         <Overlay
@@ -100,6 +103,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
           </ModalContent>
         </Overlay>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

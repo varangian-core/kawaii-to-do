@@ -59,6 +59,8 @@ npm run dev
 5. **Delete Tasks**: Click the 🗑️ button on any task
 6. **Customize Background**: Click the 🎨 button on any task
 7. **Track Progress**: Click the circular progress indicator to set completion percentage
+8. **Batch Import**: Click 📥 in the header to import multiple tasks at once
+9. **Batch Delete**: Click 🗑️ in the header to delete multiple tasks by name
 
 ### User Management
 
@@ -197,6 +199,48 @@ The app uses a hybrid storage approach:
 - **Production (Firebase)**: Uses Firestore cloud database (☁️ icon in header)
 
 This means your todos automatically sync across devices when using the deployed version!
+
+### Data Protection Features
+
+1. **Automatic Validation**: The app validates all data before saving to prevent corruption
+2. **Local Backups**: Automatically keeps the 5 most recent local backups
+3. **Google Drive Backup**: Manual and automatic backup to Google Drive
+
+## Backup & Restore 💾
+
+### Easy Backup System
+
+The app includes a simple backup system that doesn't require any configuration:
+
+1. **Download Backup**:
+   - Click the 💾 button in the header
+   - Click "Download Backup"
+   - A JSON file will be downloaded with all your data
+   - File is named with the current date for easy organization
+
+2. **Restore from Backup**:
+   - Click the 💾 button in the header
+   - Click "Choose Backup File"
+   - Select a previously downloaded backup file
+   - Your data will be restored instantly
+
+### What's Included in Backups
+
+- ✅ All tasks and their content
+- ✅ Task progress and assignments
+- ✅ All columns and their order
+- ✅ User profiles
+- ✅ App settings (auto-delete, etc.)
+- ✅ Background images and colors
+
+### Preventing Data Loss
+
+The app includes several safeguards against data loss:
+
+1. **Auto-Delete Protection**: Auto-delete settings now persist between sessions
+2. **Data Validation**: Prevents loading corrupt or empty data
+3. **Backup Before Overwrite**: Creates local backup before saving new data
+4. **Real-time Sync Protection**: Validates incoming data from Firebase
 
 ## License 📄
 

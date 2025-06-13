@@ -36,7 +36,7 @@ export const useUIStore = create<UIState>()(
       selectedUserFilters: [],
       columnUserFilters: {},
       filterMode: 'global',
-      autoDeleteHours: 0,
+      autoDeleteHours: parseInt(localStorage.getItem('kawaii-todo-auto-delete-hours') || '0'),
 
       openImagePicker: (targetTaskId: string) => {
         set({
@@ -134,6 +134,7 @@ export const useUIStore = create<UIState>()(
       },
 
       setAutoDeleteHours: (hours: number) => {
+        localStorage.setItem('kawaii-todo-auto-delete-hours', hours.toString());
         set({ autoDeleteHours: hours });
       },
     }),

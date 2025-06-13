@@ -3,6 +3,8 @@ import { useBoardStore } from '../store/boardStore';
 import { useUserStore } from '../store/userStore';
 import { useUIStore } from '../store/uiStore';
 import { storageAdapter, isUsingFirebase } from '../lib/storageAdapter';
+import { isValidBoardData, wouldCauseDataLoss, isValidUserData } from '../utils/dataValidation';
+import { useBackupStore, startAutoBackup } from '../store/backupStore';
 
 export function useAppInitializer() {
   const setBoardState = useBoardStore((state) => state.setBoardState);
@@ -13,9 +15,9 @@ export function useAppInitializer() {
     if (isInitialized.current) return;
     
     try {
-      // Load saved board state
+      // Load saved board state with validation
       const boardData = await storageAdapter.loadBoardData();
-      if (boardData && Object.keys(boardData).length > 0) {
+      if (boardData && isValidBoardData(boardData)) {
         // Migrate old assignedUserId to assignedUserIds array
         if (boardData.tasks) {
           const migratedTasks = { ...boardData.tasks };
@@ -29,20 +31,52 @@ export function useAppInitializer() {
           boardData.tasks = migratedTasks;
         }
         setBoardState(boardData);
+      } else if (boardData) {
+        console.warn('Loaded board data is invalid, skipping initialization');
       }
       
-      // Load saved user state
+      // Load saved user state with validation
       const userData = await storageAdapter.loadUserData();
-      if (userData && userData.users) {
+      if (userData && isValidUserData(userData)) {
         useUserStore.setState(userData);
+      } else if (userData) {
+        console.warn('Loaded user data is invalid, skipping initialization');
       }
       
       isInitialized.current = true;
       
+      // Initialize backup service if enabled
+      const { initializeGoogleDrive, autoBackupEnabled } = useBackupStore.getState();
+      initializeGoogleDrive().then(() => {
+        if (autoBackupEnabled) {
+          startAutoBackup();
+        }
+      });
+      
       // Set up real-time listeners if using Firebase
       if (isUsingFirebase() && storageAdapter.subscribeToBoardChanges) {
-        // Subscribe to board changes
+        // Subscribe to board changes with validation
         storageAdapter.subscribeToBoardChanges((data) => {
+          // Get current state to check for data loss
+          const currentState = useBoardStore.getState();
+          const currentData = {
+            tasks: currentState.tasks,
+            columns: currentState.columns,
+            columnOrder: currentState.columnOrder
+          };
+          
+          // Check if incoming data would cause data loss
+          if (wouldCauseDataLoss(currentData, data)) {
+            console.error('Blocked incoming data that would cause data loss');
+            return;
+          }
+          
+          // Validate incoming data
+          if (!isValidBoardData(data)) {
+            console.error('Received invalid board data from real-time sync');
+            return;
+          }
+          
           // Migrate old assignedUserId to assignedUserIds array
           if (data.tasks) {
             const migratedTasks = { ...data.tasks };
@@ -58,9 +92,13 @@ export function useAppInitializer() {
           setBoardState(data);
         });
         
-        // Subscribe to user changes
+        // Subscribe to user changes with validation
         if (storageAdapter.subscribeToUserChanges) {
           storageAdapter.subscribeToUserChanges((data) => {
+            if (!isValidUserData(data)) {
+              console.error('Received invalid user data from real-time sync');
+              return;
+            }
             useUserStore.setState(data);
           });
         }

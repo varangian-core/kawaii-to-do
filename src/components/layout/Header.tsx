@@ -6,6 +6,7 @@ import { UserFilterDropdown } from '../common/UserFilterDropdown';
 import { useUIStore } from '../../store/uiStore';
 import { BatchImportModal } from '../BatchImport/BatchImportModal';
 import { BatchDeleteModal } from '../BatchDelete/BatchDeleteModal';
+import { SimpleBackupManager } from '../Backup/SimpleBackupManager';
 
 const floatAnimation = keyframes`
   0%, 100% {
@@ -230,6 +231,7 @@ export const Header: React.FC = () => {
         >
           🗑️
         </ActionButton>
+        <SimpleBackupManager />
         {isEditMode && <UserFilterDropdown />}
       </ControlsContainer>
       
