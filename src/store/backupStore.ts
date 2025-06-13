@@ -83,7 +83,6 @@ export const useBackupStore = create<BackupState>((set, get) => ({
 
       const config: BackupConfig = {
         autoDeleteHours: uiState.autoDeleteHours,
-        isEditMode: uiState.isEditMode,
       };
 
       // Create backup
