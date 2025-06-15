@@ -12,14 +12,15 @@ import { useUIStore } from '../../store/uiStore';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { ColumnFilterButton } from '../common/ColumnFilterButton';
+import { DeleteColumnModal } from '../common/DeleteColumnModal';
 
 const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 1rem;
-  min-width: 320px;
-  max-width: 320px;
+  width: 320px;
+  min-width: 280px;
   box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
   border: 1px solid rgba(255, 182, 193, 0.3);
   display: flex;
@@ -28,6 +29,18 @@ const ColumnContainer = styled(motion.div)<{ isDragging?: boolean }>`
   max-height: calc(100vh - 220px);
   opacity: ${props => props.isDragging ? 0.5 : 1};
   cursor: ${props => props.isDragging ? 'grabbing' : 'grab'};
+  
+  @media (max-width: 768px) {
+    width: 280px;
+    min-width: 250px;
+    padding: 0.75rem;
+    max-height: calc(100vh - 280px);
+  }
+  
+  @media (max-width: 480px) {
+    width: 250px;
+    min-width: 220px;
+  }
 `;
 
 const ColumnHeader = styled.div`
@@ -146,12 +159,13 @@ interface ColumnProps {
 
 export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
   const { addTask, deleteColumn, updateColumn, tasks: allTasks } = useBoardStore();
-  const { selectedUserFilters, columnUserFilters, filterMode } = useUIStore();
+  const { selectedUserFilters, columnUserFilters, filterMode, isEditMode } = useUIStore();
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskContent, setNewTaskContent] = useState('');
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(column.title);
   const [showDuplicateNotification, setShowDuplicateNotification] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Auto-dismiss duplicate notification
   useEffect(() => {
@@ -216,9 +230,8 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
   };
 
   const handleDeleteColumn = () => {
-    if (window.confirm(`Delete column "${column.title}" and all its tasks?`)) {
-      deleteColumn(column.id);
-    }
+    deleteColumn(column.id);
+    setShowDeleteModal(false);
   };
 
   const handleUpdateTitle = () => {
@@ -243,17 +256,18 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
   };
 
   return (
-    <ColumnContainer
-      ref={(node) => {
-        setSortableRef(node);
-        setDroppableRef(node);
-      }}
-      style={style}
-      isDragging={isDragging}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <>
+      <ColumnContainer
+        ref={(node) => {
+          setSortableRef(node);
+          setDroppableRef(node);
+        }}
+        style={style}
+        isDragging={isDragging}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+      >
       <ColumnHeader {...attributes} {...listeners}>
         {isEditingTitle ? (
           <Input
@@ -273,7 +287,9 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
         <HeaderControls>
           <TaskCount>{filteredTasks.length}</TaskCount>
           <ColumnFilterButton columnId={column.id} />
-          <DeleteButton onClick={handleDeleteColumn}>×</DeleteButton>
+          {isEditMode && (
+            <DeleteButton onClick={() => setShowDeleteModal(true)}>×</DeleteButton>
+          )}
         </HeaderControls>
       </ColumnHeader>
 
@@ -331,6 +347,15 @@ export const Column: React.FC<ColumnProps> = ({ column, tasks }) => {
           </Button>
         )}
       </AddTaskContainer>
-    </ColumnContainer>
+      </ColumnContainer>
+      
+      <DeleteColumnModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onDelete={handleDeleteColumn}
+        columnTitle={column.title}
+        taskCount={tasks.length}
+      />
+    </>
   );
 };

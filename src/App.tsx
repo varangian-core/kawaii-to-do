@@ -98,10 +98,14 @@ const AppContainer = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
+  padding: 0;
+  overflow: hidden;
   position: relative;
   min-height: 600px;
+  
+  @media (max-width: 768px) {
+    min-height: 500px;
+  }
 `;
 
 const DragOverlayContainer = styled.div`
