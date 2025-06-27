@@ -33,8 +33,16 @@ const localStorageAdapter: StorageAdapter = {
       
       const parsed = JSON.parse(data);
       
+      // Ensure proper structure
+      const boardData = {
+        ...parsed,
+        tasks: parsed.tasks || {},
+        columns: parsed.columns || {},
+        columnOrder: parsed.columnOrder || []
+      };
+      
       // Validate the loaded data
-      if (!isValidBoardData(parsed)) {
+      if (!isValidBoardData(boardData)) {
         console.warn('Invalid board data in localStorage');
         // Try to load from backup
         const backupKeys = Object.keys(localStorage).filter(key => 
@@ -49,9 +57,16 @@ const localStorageAdapter: StorageAdapter = {
             const backupData = localStorage.getItem(backupKey);
             if (backupData) {
               const backupParsed = JSON.parse(backupData);
-              if (isValidBoardData(backupParsed)) {
+              // Ensure proper structure for backup data
+              const backupBoardData = {
+                ...backupParsed,
+                tasks: backupParsed.tasks || {},
+                columns: backupParsed.columns || {},
+                columnOrder: backupParsed.columnOrder || []
+              };
+              if (isValidBoardData(backupBoardData)) {
                 console.log('Restored from backup:', backupKey);
-                return backupParsed;
+                return backupBoardData;
               }
             }
           }
@@ -60,7 +75,7 @@ const localStorageAdapter: StorageAdapter = {
         return null;
       }
       
-      return parsed;
+      return boardData;
     } catch (error) {
       console.error('Error loading board data from localStorage:', error);
       return null;
@@ -106,12 +121,19 @@ const localStorageAdapter: StorageAdapter = {
       
       const parsed = JSON.parse(data);
       
-      if (!isValidUserData(parsed)) {
+      // Ensure proper structure
+      const userData = {
+        ...parsed,
+        users: parsed.users || {},
+        currentUserId: parsed.currentUserId || null
+      };
+      
+      if (!isValidUserData(userData)) {
         console.warn('Invalid user data in localStorage');
         return null;
       }
       
-      return parsed;
+      return userData;
     } catch (error) {
       console.error('Error loading user data from localStorage:', error);
       return null;
@@ -136,61 +158,72 @@ const localStorageAdapter: StorageAdapter = {
 const firestoreAdapter: StorageAdapter = {
   loadBoardData: async () => {
     try {
+      console.log('[Firebase] Loading board data...');
       // Using a fixed document ID for now - could be user-specific later
       const docRef = doc(db, 'boards', 'default-board');
       const docSnap = await getDoc(docRef);
       
       if (docSnap.exists()) {
         const data = docSnap.data();
+        console.log('[Firebase] Board data loaded successfully');
+        
+        // Ensure data has required structure (add defaults if missing)
+        const boardData = {
+          ...data, // Include any other properties
+          tasks: data.tasks || {},
+          columns: data.columns || {},
+          columnOrder: data.columnOrder || []
+        };
         
         // Validate the loaded data
-        if (!isValidBoardData(data)) {
-          console.error('Invalid board data from Firestore');
-          
-          // Try to load from backup collection
-          const backupRef = doc(db, 'backups', 'default-board-latest');
-          const backupSnap = await getDoc(backupRef);
-          
-          if (backupSnap.exists()) {
-            const backupData = backupSnap.data();
-            if (isValidBoardData(backupData)) {
-              console.log('Restored from Firestore backup');
-              return backupData;
-            }
-          }
-          
+        if (!isValidBoardData(boardData)) {
+          console.error('[Firebase] Invalid board data from Firestore:', boardData);
           return null;
         }
         
-        return data as BoardData;
+        return boardData;
       }
+      console.log('[Firebase] No board data found in Firestore');
       return null;
-    } catch (error) {
-      console.error('Error loading board data from Firestore:', error);
+    } catch (error: any) {
+      console.error('[Firebase] Error loading board data from Firestore:', error);
+      console.error('[Firebase] Error details:', error.code, error.message);
       return null;
     }
   },
   
   saveBoardData: async (data) => {
     try {
+      console.log('[Firebase] Saving board data...');
+      // Ensure we have valid structure before saving
+      const dataToSave = {
+        ...data,
+        tasks: data.tasks || {},
+        columns: data.columns || {},
+        columnOrder: data.columnOrder || []
+      };
+      
       // Validate before saving
-      if (!isValidBoardData(data)) {
-        console.error('Attempted to save invalid board data to Firestore');
+      if (!isValidBoardData(dataToSave)) {
+        console.error('[Firebase] Attempted to save invalid board data to Firestore:', dataToSave);
         return;
       }
       
       // Save backup first
       const backupRef = doc(db, 'backups', 'default-board-latest');
       await setDoc(backupRef, {
-        ...data,
+        ...dataToSave,
         backedUpAt: new Date().toISOString()
       });
       
       // Then save main data
       const docRef = doc(db, 'boards', 'default-board');
-      await setDoc(docRef, data);
-    } catch (error) {
-      console.error('Error saving board data to Firestore:', error);
+      await setDoc(docRef, dataToSave);
+      console.log('[Firebase] Board data saved successfully');
+    } catch (error: any) {
+      console.error('[Firebase] Error saving board data to Firestore:', error);
+      console.error('[Firebase] Error details:', error.code, error.message);
+      // Don't throw - allow app to continue working even if save fails
     }
   },
   
@@ -202,12 +235,19 @@ const firestoreAdapter: StorageAdapter = {
       if (docSnap.exists()) {
         const data = docSnap.data();
         
-        if (!isValidUserData(data)) {
+        // Ensure proper structure
+        const userData = {
+          ...data,
+          users: data.users || {},
+          currentUserId: data.currentUserId || null
+        };
+        
+        if (!isValidUserData(userData)) {
           console.error('Invalid user data from Firestore');
           return null;
         }
         
-        return data as UserData;
+        return userData;
       }
       return null;
     } catch (error) {
@@ -218,13 +258,20 @@ const firestoreAdapter: StorageAdapter = {
   
   saveUserData: async (data) => {
     try {
-      if (!isValidUserData(data)) {
+      // Ensure proper structure
+      const dataToSave = {
+        ...data,
+        users: data.users || {},
+        currentUserId: data.currentUserId || null
+      };
+      
+      if (!isValidUserData(dataToSave)) {
         console.error('Attempted to save invalid user data to Firestore');
         return;
       }
       
       const docRef = doc(db, 'users', 'default-users');
-      await setDoc(docRef, data);
+      await setDoc(docRef, dataToSave);
     } catch (error) {
       console.error('Error saving user data to Firestore:', error);
     }
@@ -232,20 +279,31 @@ const firestoreAdapter: StorageAdapter = {
   
   // Real-time listeners for Firestore with validation
   subscribeToBoardChanges: (callback) => {
+    console.log('[Firebase] Setting up real-time board listener...');
     const docRef = doc(db, 'boards', 'default-board');
     return onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
         const data = doc.data();
+        console.log('[Firebase] Received board update from Firestore');
+        
+        // Ensure data has required structure
+        const boardData = {
+          ...data,
+          tasks: data.tasks || {},
+          columns: data.columns || {},
+          columnOrder: data.columnOrder || []
+        };
         
         // Only call callback if data is valid
-        if (isValidBoardData(data)) {
-          callback(data as BoardData);
+        if (isValidBoardData(boardData)) {
+          callback(boardData);
         } else {
-          console.warn('Received invalid board data from Firestore real-time update');
+          console.warn('[Firebase] Received invalid board data from Firestore real-time update:', boardData);
         }
       }
-    }, (error) => {
-      console.error('Error in board changes subscription:', error);
+    }, (error: any) => {
+      console.error('[Firebase] Error in board changes subscription:', error);
+      console.error('[Firebase] Error details:', error.code, error.message);
     });
   },
   
@@ -253,8 +311,24 @@ const firestoreAdapter: StorageAdapter = {
     const docRef = doc(db, 'users', 'default-users');
     return onSnapshot(docRef, (doc) => {
       if (doc.exists()) {
-        callback(doc.data() as UserData);
+        const data = doc.data();
+        
+        // Ensure proper structure
+        const userData = {
+          ...data,
+          users: data.users || {},
+          currentUserId: data.currentUserId || null
+        };
+        
+        if (isValidUserData(userData)) {
+          callback(userData);
+        } else {
+          console.warn('[Firebase] Received invalid user data from real-time update');
+        }
       }
+    }, (error: any) => {
+      console.error('[Firebase] Error in user changes subscription:', error);
+      console.error('[Firebase] Error details:', error.code, error.message);
     });
   }
 };

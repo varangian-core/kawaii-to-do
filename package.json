@@ -11,6 +11,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "deploy": "npm run build && firebase deploy --only hosting",
+    "deploy:kawaii": "npm run build && firebase use kawaii && firebase deploy --only hosting",
+    "deploy:cowork": "npm run build && firebase use cowork && firebase deploy --only hosting",
     "deploy:preview": "npm run build && firebase hosting:channel:deploy preview"
   },
   "keywords": [],

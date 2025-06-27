@@ -125,6 +125,7 @@ export const useBoardStore = create<BoardState>()(
 
         moveTask: (taskId: string, sourceColumnId: string, destColumnId: string, destIndex: number) => {
           set((state) => {
+            console.log('[BoardStore] Moving task:', { taskId, from: sourceColumnId, to: destColumnId, index: destIndex });
             const sourceColumn = state.columns[sourceColumnId];
             const destColumn = state.columns[destColumnId];
 
@@ -227,6 +228,7 @@ export const useBoardStore = create<BoardState>()(
         },
 
         setBoardState: (newState: Partial<BoardState>) => {
+          console.log('[BoardStore] Setting board state with new data');
           set(newState);
         },
       }),

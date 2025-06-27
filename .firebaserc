@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "kawaiitodo-d8d42"
+    "default": "kawaiitodo-d8d42",
+    "kawaii": "kawaiitodo-d8d42",
+    "cowork": "coworkcornertodo"
   }
 }

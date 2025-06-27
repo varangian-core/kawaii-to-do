@@ -16,6 +16,7 @@ export function useAppInitializer() {
     
     try {
       // Load saved board state with validation
+      console.log('[App] Loading initial board data');
       const boardData = await storageAdapter.loadBoardData();
       if (boardData && isValidBoardData(boardData)) {
         // Migrate old assignedUserId to assignedUserIds array
@@ -30,9 +31,12 @@ export function useAppInitializer() {
           });
           boardData.tasks = migratedTasks;
         }
+        console.log('[App] Setting initial board state');
         setBoardState(boardData);
       } else if (boardData) {
-        console.warn('Loaded board data is invalid, skipping initialization');
+        console.warn('[App] Loaded board data is invalid, skipping initialization');
+      } else {
+        console.log('[App] No existing board data found');
       }
       
       // Load saved user state with validation
@@ -53,31 +57,36 @@ export function useAppInitializer() {
         }
       });
       
-      // Set up real-time listeners if using Firebase
-      if (isUsingFirebase() && storageAdapter.subscribeToBoardChanges) {
-        // Subscribe to board changes with validation
-        storageAdapter.subscribeToBoardChanges((data) => {
-          // Get current state to check for data loss
-          const currentState = useBoardStore.getState();
-          const currentData = {
-            tasks: currentState.tasks,
-            columns: currentState.columns,
-            columnOrder: currentState.columnOrder
-          };
-          
-          // Check if incoming data would cause data loss
-          if (wouldCauseDataLoss(currentData, data)) {
-            console.error('Blocked incoming data that would cause data loss');
-            return;
-          }
-          
-          // Validate incoming data
-          if (!isValidBoardData(data)) {
-            console.error('Received invalid board data from real-time sync');
-            return;
-          }
-          
-          // Migrate old assignedUserId to assignedUserIds array
+      // Note: Real-time listeners are now set up in the persistence effect
+      // to better handle the flag coordination
+    } catch (error) {
+      console.error('Error initializing app:', error);
+    }
+  }, [setBoardState]);
+
+  // Set up subscription for persistence
+  useEffect(() => {
+    // Add a flag to prevent saving during incoming Firebase updates
+    let isReceivingUpdate = false;
+    
+    // Store the unsubscribe function for Firebase listener
+    let unsubscribeFirebase: (() => void) | null = null;
+    
+    // Modified Firebase listener that sets flag during updates
+    if (isUsingFirebase() && storageAdapter.subscribeToBoardChanges) {
+      unsubscribeFirebase = storageAdapter.subscribeToBoardChanges((data) => {
+        isReceivingUpdate = true;
+        console.log('[App] Receiving Firebase update, temporarily disabling saves');
+        
+        const currentState = useBoardStore.getState();
+        const currentData = {
+          tasks: currentState.tasks,
+          columns: currentState.columns,
+          columnOrder: currentState.columnOrder
+        };
+        
+        if (!wouldCauseDataLoss(currentData, data) && isValidBoardData(data)) {
+          // Migrate data if needed
           if (data.tasks) {
             const migratedTasks = { ...data.tasks };
             Object.keys(migratedTasks).forEach(taskId => {
@@ -90,29 +99,19 @@ export function useAppInitializer() {
             data.tasks = migratedTasks;
           }
           setBoardState(data);
-        });
-        
-        // Subscribe to user changes with validation
-        if (storageAdapter.subscribeToUserChanges) {
-          storageAdapter.subscribeToUserChanges((data) => {
-            if (!isValidUserData(data)) {
-              console.error('Received invalid user data from real-time sync');
-              return;
-            }
-            useUserStore.setState(data);
-          });
         }
-      }
-    } catch (error) {
-      console.error('Error initializing app:', error);
+        
+        // Re-enable saves after a short delay
+        setTimeout(() => {
+          isReceivingUpdate = false;
+          console.log('[App] Re-enabling saves after Firebase update');
+        }, 1000);
+      });
     }
-  }, [setBoardState]);
-
-  // Set up subscription for persistence
-  useEffect(() => {
+    
     const unsubscribe = useBoardStore.subscribe(
       (state) => {
-        if (isInitialized.current) {
+        if (isInitialized.current && !isReceivingUpdate) {
           // Debounce saves to avoid too many writes
           clearTimeout(saveTimeoutRef.current);
           saveTimeoutRef.current = setTimeout(() => {
@@ -121,7 +120,10 @@ export function useAppInitializer() {
               columns: state.columns,
               columnOrder: state.columnOrder,
             };
-            storageAdapter.saveBoardData(dataToSave);
+            console.log('[App] Saving board data to storage');
+            storageAdapter.saveBoardData(dataToSave).catch(error => {
+              console.error('[App] Failed to save board data:', error);
+            });
           }, 500);
         }
       }
@@ -147,6 +149,9 @@ export function useAppInitializer() {
     return () => {
       unsubscribe();
       unsubscribeUsers();
+      if (unsubscribeFirebase) {
+        unsubscribeFirebase();
+      }
       clearTimeout(saveTimeoutRef.current);
     };
   }, []);
